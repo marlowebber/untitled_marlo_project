@@ -6,7 +6,7 @@
 
 #IncludeRegexTransform: 
 
-/home/marlo/Documents/untitled_marlo_project_cpp/src/game.cpp
+/home/marlo/Documents/untitled_marlo_project/src/game.cpp
 stdio.h
 -
 stdint.h
@@ -22,7 +22,7 @@ SDL.h
 SDL_opengl.h
 -
 SDL.h
-/home/marlo/Documents/untitled_marlo_project_cpp/src/SDL.h
+/home/marlo/Documents/untitled_marlo_project/src/SDL.h
 boost/thread.hpp
 -
 random
