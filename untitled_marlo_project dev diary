@@ -1,0 +1,178 @@
+
+
+untitled marlo project dev diary
+
+- because every tag has a unique power of 2 ID, we can bitmask everything so they can occupy the same spaces. that would be pretty great to do.
+	-> i did this and it is amazing.
+
+- turn energy into bigger numbers so you can have a bit more control over it.
+	what should the starting energy be?	
+	-> i used floats instead.
+
+
+
+
+how to make a system for the animals to be controlled?
+
+
+signal is a number property of the animal sprite which is just the itensity and sign of a control signal.
+it is channeled and modified by nerve organs which come in different types.
+signal is propagated from sources which are generally sensors, and provides control to sinks, which are actuators like muscles.
+
+this system has a great deal of responsibility, and is quite complicated to be implemented by the genetic system.
+
+it must be an excellent system that is simple, flexible and powerful at the same time.
+I have already tried:
+	- signal is boolean and there are condition nerves that route it to a muscle.
+		-> this is probably too complicated to pull off.
+	
+	- signal is a direction tag that finds its way to the muscle according to routes of other direction tags.
+		-> this seems equally complicated, although i like that it is all binary logic and not floats.
+		
+	- signal is a float (intensity) and muscles move the animal according to their direction from the center. There are no nerves and sensor and muscles get signal to and from their immediate neighbours. This is what i'm currently using.
+		-> writing it out, it sounds pretty good. This solution tends to act 'patternistically' where the animals move in rigid and unlifelike ways, tending to array themselves when reproducing, stuck on terrain, or just moving back and forth forever.
+		
+		
+at the moment sensors just make signal if there is food at their immediate location, which actually makes them useless for steering. We need to know where the food is at a distance to get the behavior we want.
+
+you could have the sensor scan its immediate environment.
+instead of just scanning around the sensor cell, it should scan up to a distance away from the creature's edge, where the distance is the number of cells of that type.
+	-> yeah no i am just going to have it scan around the sensor for now
+world squares inside the creature should be fully revealed whether it has sensors or not.
+
+sensors should provide a float angle direction and intensity. they give signal to their own squares and to their neighbours, pulling the value towards their own value, with more intense signals pulling the value faster.
+
+muscles accept a float angle direction and pull with a strength of 1/<creature's mass>. They will average signal from their own squares plus those of their neighbours.
+
+what kind of sensors should there be?
+
+the creature's life duties can be summarised with the four F's
+- fight
+- feed
+- flee
+- breed
+
+FIGHT and FLEE can be achieved with a sensor that compares the combat aptitude of the creature with that of a rival. Plus maybe the addition of an ORGAN_SIGNAL_INV cell that applies inverted behavior to any sensor neighbours that it has.
+
+FEED can be achieved with sensors for the food types. A food particle sensor and a light sensor.
+
+BREED can be done with a sensor that detects nearby creatures.
+
+there can be a random-walk sensor that applies noise and doesn't detect anything.
+there can be RX and TX sensor that take and transmit their nearby signals.
+
+if presented with multiple signals
+--------------------------------
+
+
+okay, what should i do to implement that new signal scheme?
+sensors scan and provide angle/intensity.
+
+muscles work by avg neighbour angle/intensity.
+
+creature sensor
+genetic distance sensor
+signal inverter
+signal random walk
+signal rx tx
+
+first though, other creature, food, and light.
+
+it is also possible to choose to not update a sensor on a particular turn, so instead of sweeping out this huge area every turn, you could sample some random squares inside of it and only change course if they are of interest.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+---------------------------------
+
+what kinds of neighbours are there?
+
+
+there are 8 neighbours, and each has 2 states. 2 << 8. There are 256 combinations.
+
+
+types
+EDGE
+CORNER
+SINGLE
+MIRROR
+INVERT
+
+directions
+DIRECTION_UP
+DIRECTION_DOWN
+DIRECTION_LEFT
+DIRECTION_RIGHT
+
+
+instead of having your crystal condition scheme, use this, it is more easily understandable and more flexible. 
+it uses 9 genes and in just a few instructions can make any combination of neighbours. crystal condition uses 8 genes already.
+
+it also provides a directionality scheme which can be used for communication between sensors and muscles.
+
+sensor senses a thing and passes a stream of DIRECTION_ tags to signal, which is propagated by nerves. the tags arrive at a muscle which moves in the direction indicated.
+
+how can DIRECTION_ propagate down a nerve? it works with floats because you average them, but you can't do that here.
+---------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+what is the best way to do drawing genes?
+
+we want it to make
+- branching treelike structures
+- repeating motifs
+
+but not have a cursor to keep track of, it just grows from valid cells
+
+
+
+ok. recursive grow doesn't cost energy.
+
+->
+what i have done is a scheme where:
+
+
+
+------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
