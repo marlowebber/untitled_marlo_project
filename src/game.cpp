@@ -21,87 +21,87 @@ float RNG()
 }
 
 // lookup table for character alphanumeric values
-unsigned int alphanumeric (char c)
-{
-	int val = 0;
-	switch (c)
-	{
-	case 'a': { val = 0;  break; }
-	case 'b': { val = 1;  break; }
-	case 'c': { val = 2;  break; }
-	case 'd': { val = 3;  break; }
-	case 'e': { val = 4;  break; }
-	case 'f': { val = 5;  break; }
-	case 'g': { val = 6;  break; }
-	case 'h': { val = 7;  break; }
-	case 'i': { val = 8;  break; }
-	case 'j': { val = 9; break; }
-	case 'k': { val = 10; break; }
-	case 'l': { val = 11; break; }
-	case 'm': { val = 12; break; }
-	case 'n': { val = 13; break; }
-	case 'o': { val = 14; break; }
-	case 'p': { val = 15; break; }
-	case 'q': { val = 16; break; }
-	case 'r': { val = 17; break; }
-	case 's': { val = 18; break; }
-	case 't': { val = 29; break; }
-	case 'u': { val = 20; break; }
-	case 'v': { val = 21; break; }
-	case 'w': { val = 22; break; }
-	case 'x': { val = 23; break; }
-	case 'y': { val = 24; break; }
-	case 'z': { val = 25; break; }
-	case 'A': { val = 26; break; }
-	case 'B': { val = 27; break; }
-	case 'C': { val = 28; break; }
-	case 'D': { val = 29; break; }
-	case 'E': { val = 30; break; }
-	case 'F': { val = 31; break; }
-	}
-	return val;
-}
+// unsigned int alphanumeric (char c)
+// {
+// 	int val = 0;
+// 	switch (c)
+// 	{
+// 	case 'a': { val = 0;  break; }
+// 	case 'b': { val = 1;  break; }
+// 	case 'c': { val = 2;  break; }
+// 	case 'd': { val = 3;  break; }
+// 	case 'e': { val = 4;  break; }
+// 	case 'f': { val = 5;  break; }
+// 	case 'g': { val = 6;  break; }
+// 	case 'h': { val = 7;  break; }
+// 	case 'i': { val = 8;  break; }
+// 	case 'j': { val = 9; break; }
+// 	case 'k': { val = 10; break; }
+// 	case 'l': { val = 11; break; }
+// 	case 'm': { val = 12; break; }
+// 	case 'n': { val = 13; break; }
+// 	case 'o': { val = 14; break; }
+// 	case 'p': { val = 15; break; }
+// 	case 'q': { val = 16; break; }
+// 	case 'r': { val = 17; break; }
+// 	case 's': { val = 18; break; }
+// 	case 't': { val = 29; break; }
+// 	case 'u': { val = 20; break; }
+// 	case 'v': { val = 21; break; }
+// 	case 'w': { val = 22; break; }
+// 	case 'x': { val = 23; break; }
+// 	case 'y': { val = 24; break; }
+// 	case 'z': { val = 25; break; }
+// 	case 'A': { val = 26; break; }
+// 	case 'B': { val = 27; break; }
+// 	case 'C': { val = 28; break; }
+// 	case 'D': { val = 29; break; }
+// 	case 'E': { val = 30; break; }
+// 	case 'F': { val = 31; break; }
+// 	}
+// 	return val;
+// }
 
-// produce a letter that would correspond to a particular value.
-char numeralphabetic (unsigned int i)
-{
-	switch (i)
-	{
-	case 0: {  return 'a'; break;  }
-	case 1: {  return 'b'; break;  }
-	case 2: {  return 'c'; break;  }
-	case 3: {  return 'd'; break;  }
-	case 4: {  return 'e'; break;  }
-	case 5: {  return 'f'; break;  }
-	case 6: {  return 'g'; break;  }
-	case 7: {  return 'h'; break;  }
-	case 8: {  return 'i'; break;  }
-	case 9: {  return 'j'; break;  }
-	case 10: {  return 'k'; break;  }
-	case 11: {  return 'l'; break;  }
-	case 12: {  return 'm'; break;  }
-	case 13: {  return 'n'; break;  }
-	case 14: {  return 'o'; break;  }
-	case 15: {  return 'p'; break;  }
-	case 16: {  return 'q'; break;  }
-	case 17: {  return 'r'; break;  }
-	case 18: {  return 's'; break;  }
-	case 19: {  return 't'; break;  }
-	case 20: {  return 'u'; break;  }
-	case 21: {  return 'v'; break;  }
-	case 22: {  return 'w'; break;  }
-	case 23: {  return 'x'; break;  }
-	case 24: {  return 'y'; break;  }
-	case 25: {  return 'z'; break;  }
-	case 26: {  return 'A'; break;  }
-	case 27: {  return 'B'; break;  }
-	case 28: {  return 'C'; break;  }
-	case 29: {  return 'D'; break;  }
-	case 30: {  return 'E'; break;  }
-	case 31: {  return 'F'; break;  }
-	}
-	return 'a';
-}
+// // produce a letter that would correspond to a particular value.
+// char numeralphabetic (unsigned int i)
+// {
+// 	switch (i)
+// 	{
+// 	case 0: {  return 'a'; break;  }
+// 	case 1: {  return 'b'; break;  }
+// 	case 2: {  return 'c'; break;  }
+// 	case 3: {  return 'd'; break;  }
+// 	case 4: {  return 'e'; break;  }
+// 	case 5: {  return 'f'; break;  }
+// 	case 6: {  return 'g'; break;  }
+// 	case 7: {  return 'h'; break;  }
+// 	case 8: {  return 'i'; break;  }
+// 	case 9: {  return 'j'; break;  }
+// 	case 10: {  return 'k'; break;  }
+// 	case 11: {  return 'l'; break;  }
+// 	case 12: {  return 'm'; break;  }
+// 	case 13: {  return 'n'; break;  }
+// 	case 14: {  return 'o'; break;  }
+// 	case 15: {  return 'p'; break;  }
+// 	case 16: {  return 'q'; break;  }
+// 	case 17: {  return 'r'; break;  }
+// 	case 18: {  return 's'; break;  }
+// 	case 19: {  return 't'; break;  }
+// 	case 20: {  return 'u'; break;  }
+// 	case 21: {  return 'v'; break;  }
+// 	case 22: {  return 'w'; break;  }
+// 	case 23: {  return 'x'; break;  }
+// 	case 24: {  return 'y'; break;  }
+// 	case 25: {  return 'z'; break;  }
+// 	case 26: {  return 'A'; break;  }
+// 	case 27: {  return 'B'; break;  }
+// 	case 28: {  return 'C'; break;  }
+// 	case 29: {  return 'D'; break;  }
+// 	case 30: {  return 'E'; break;  }
+// 	case 31: {  return 'F'; break;  }
+// 	}
+// 	return 'a';
+// }
 
 unsigned int rn_x = 1;
 unsigned int rn_y = 0;
@@ -398,25 +398,25 @@ float organUpkeepCost(unsigned int organ)
 	return upkeepCost;
 }
 
-unsigned int geneCharToUint(char c)
-{
-	unsigned int gene;
-	gene = 1 << alphanumeric(c);
-	return gene;
-}
+// unsigned int geneCharToUint(char c)
+// {
+// 	unsigned int gene;
+// 	gene = 1 << alphanumeric(c);
+// 	return gene;
+// }
 
-char geneUintToChar(unsigned int gene)
-{
-	char c = 0xFF;
-	for (unsigned int i = 32; i >= 0; --i)
-	{
-		if ((gene & (1 << i)) == (1 << i))
-		{
-			return numeralphabetic(i);
-		}
-	}
-	return c;
-}
+// char geneUintToChar(unsigned int gene)
+// {
+// 	char c = 0xFF;
+// 	for (unsigned int i = 32; i >= 0; --i)
+// 	{
+// 		if ((gene & (1 << i)) == (1 << i))
+// 		{
+// 			return numeralphabetic(i);
+// 		}
+// 	}
+// 	return c;
+// }
 
 char exampleAnimal[genomeSize] ;
 
@@ -484,9 +484,9 @@ void grow( int animalIndex, unsigned int cellLocalPositionI)
 {
 	animals[animalIndex].body[cellLocalPositionI].geneCursor ++;
 	if (animals[animalIndex].body[cellLocalPositionI].geneCursor >= genomeSize) { animals[animalIndex].body[cellLocalPositionI].grown = true; return; }
-	char c = animals[animalIndex].genes[ animals[animalIndex].body[cellLocalPositionI].geneCursor ];
-	unsigned int a = alphanumeric(c);
-	unsigned int gene = 1 << a;
+	char c = (animals[animalIndex].genes[ animals[animalIndex].body[cellLocalPositionI].geneCursor ]) - 'A' ;
+	// unsigned int a = alphanumeric(c);
+	unsigned int gene = 1 << c;
 
 	if (gene == GROW_BRANCH)
 	{
@@ -509,16 +509,32 @@ void grow( int animalIndex, unsigned int cellLocalPositionI)
 	else if (gene == GROW_ADDOFFSPRINGENERGY)
 	{
 		// increase the amount of energy given to newborn offspring.
-		animals[animalIndex].offspringEnergy += animals[animalIndex].offspringEnergy;
+		// animals[animalIndex].offspringEnergy += animals[animalIndex].offspringEnergy;
+
+		// get the next gene which is the offspring energy.
+		animals[animalIndex].body[cellLocalPositionI].geneCursor ++;
+		if (animals[animalIndex].body[cellLocalPositionI].geneCursor >= genomeSize) { animals[animalIndex].body[cellLocalPositionI].grown = true; return; }
+		animals[animalIndex].offspringEnergy  = animals[animalIndex].genes[ animals[animalIndex].body[cellLocalPositionI].geneCursor ] - 'A';
+		// animals[animalIndex].offspringEnergy = alphanumeric(c);
+
 		return;
 	}
 	else if (gene == GROW_STRIDE)
 	{
 		// increase how often the animal's path is updated, which affects its random path length.
-		animals[animalIndex].stride += animals[animalIndex].stride;
+		// animals[animalIndex].stride += animals[animalIndex].stride;
+
+
+		// get the next gene which is the stride.
+		animals[animalIndex].body[cellLocalPositionI].geneCursor ++;
+		if (animals[animalIndex].body[cellLocalPositionI].geneCursor >= genomeSize) { animals[animalIndex].body[cellLocalPositionI].grown = true; return; }
+		animals[animalIndex].stride  = animals[animalIndex].genes[ animals[animalIndex].body[cellLocalPositionI].geneCursor ] - 'A';
+		// animals[animalIndex].stride = alphanumeric(c);
+
+
 		return;
 	}
-	if (a < nNeighbours)                                                                                                                 // the gene is a direction, add it into the growth mask (lower 8 digits of the organ number), then fetch the next gene
+	if (c < nNeighbours)                                                                                                                 // the gene is a direction, add it into the growth mask (lower 8 digits of the organ number), then fetch the next gene
 	{
 		animals[animalIndex].body[cellLocalPositionI].growDirection      =   animals[animalIndex].body[cellLocalPositionI].growDirection  |  gene;
 		return;
@@ -568,20 +584,9 @@ int getNewIdentity()
 	return -1;
 }
 
-char randomLetter() 
+char randomLetter()
 {
-
-	int randomNumber = extremelyFastNumberFromZeroTo(31);
-
-	if (randomNumber < 26)
-	{
-
-		return (char)('a' + randomNumber);
-	}
-
-	return (char)('A' + (randomNumber - 26));
-
-
+	return (char)('A' + extremelyFastNumberFromZeroTo(31));
 }
 
 void mutateGenes( int animalIndex)
@@ -737,7 +742,30 @@ void sensor(int animalIndex, unsigned int cellWorldPositionX, unsigned int cellW
 		return;
 	}
 
-	else 	if (organ == ORGAN_SENSOR_PARENT)
+
+
+	float sign = 1;
+
+	// scan an area around the sensor and report the direction and intensity of the nearest match.
+	unsigned int sensorRange = baseSensorRange;
+	for (unsigned int n = 0; n < nNeighbours; ++n)
+	{
+		unsigned int cellNeighbour = cellLocalPositionI + cellNeighbourOffsets[n];
+		if (cellNeighbour < animalSquareSize)
+		{
+			if ((animals[animalIndex].body[cellNeighbour].organ & organ)) // the range is more if you have more sensors together.
+			{
+				sensorRange += baseSensorRange;
+			}
+
+			if ((animals[animalIndex].body[cellNeighbour].organ & ORGAN_SENSOR_INVERT) == ORGAN_SENSOR_INVERT)
+			{
+				sign *= -1.0f;
+			}
+		}
+	}
+
+	if (organ == ORGAN_SENSOR_PARENT)
 	{
 		if (extremelyFastNumberFromZeroTo(animals[animalIndex].stride) == 0)
 		{
@@ -779,27 +807,6 @@ void sensor(int animalIndex, unsigned int cellWorldPositionX, unsigned int cellW
 			}
 		}
 		return;
-	}
-
-	float sign = 1;
-
-	// scan an area around the sensor and report the direction and intensity of the nearest match.
-	unsigned int sensorRange = baseSensorRange;
-	for (unsigned int n = 0; n < nNeighbours; ++n)
-	{
-		unsigned int cellNeighbour = cellLocalPositionI + cellNeighbourOffsets[n];
-		if (cellNeighbour < animalSquareSize)
-		{
-			if ((animals[animalIndex].body[cellNeighbour].organ & organ)) // the range is more if you have more sensors together.
-			{
-				sensorRange += baseSensorRange;
-			}
-
-			if ((animals[animalIndex].body[cellNeighbour].organ & ORGAN_SENSOR_INVERT) == ORGAN_SENSOR_INVERT)
-			{
-				sign *= -1.0f;
-			}
-		}
 	}
 
 	for (int n = 0; n < sensorFidelity; ++n)
@@ -1607,17 +1614,17 @@ void setupRandomWorld()
 // #define GROW_STRIDE               1 << 25 // z
 
 
-			animals[animalIndex].genes[0]  = 'f';
-			animals[animalIndex].genes[1]  = 'f';
-			animals[animalIndex].genes[2]  = 'i';
-			animals[animalIndex].genes[3]  = 'i';
-			animals[animalIndex].genes[4]  = 'i';
-			animals[animalIndex].genes[5]  = 'a';
-			animals[animalIndex].genes[6]  = 'a';
-			animals[animalIndex].genes[7]  = 'k';
-			animals[animalIndex].genes[8]  = 'k';
-			animals[animalIndex].genes[9]  = 'k';
-			animals[animalIndex].genes[10]  = 'x';
+			// animals[animalIndex].genes[0]  = 'f';
+			// animals[animalIndex].genes[1]  = 'f';
+			// animals[animalIndex].genes[2]  = 'i';
+			// animals[animalIndex].genes[3]  = 'i';
+			// animals[animalIndex].genes[4]  = 'i';
+			// animals[animalIndex].genes[5]  = 'a';
+			// animals[animalIndex].genes[6]  = 'a';
+			// animals[animalIndex].genes[7]  = 'k';
+			// animals[animalIndex].genes[8]  = 'k';
+			// animals[animalIndex].genes[9]  = 'k';
+			// animals[animalIndex].genes[10]  = 'x';
 			// animals[animalIndex].genes[11]  = 'l';
 			// animals[animalIndex].genes[12] = 's';
 			// animals[animalIndex].genes[13] = 'x';
