@@ -348,13 +348,27 @@ void grow( int animalIndex, unsigned int cellLocalPositionI)
 
 	if (gene == GROW_BRANCH)
 	{
-		animals[animalIndex].body[   cellLocalPositionI    ].readyToSplit = true;     	                       // start a new branch. basically, mark this cell as the origin for all of its children. (but its own origin does not change).
+		for (unsigned int n = 0; n < nNeighbours; ++n)
+		{
+			if ( ( animals[animalIndex].body[cellLocalPositionI].growDirection & (1U << n)) == (1U << n) )                               // if the growth mask says this neighbour is ready
+			{
+				unsigned int cellNeighbour = cellLocalPositionI + cellNeighbourOffsets[n];
+				if (cellNeighbour < animalSquareSize)
+				{
+					animals[animalIndex].body[cellNeighbour].sequenceNumber = 0;
+					animals[animalIndex].body[cellNeighbour].origin     = cellLocalPositionI;
+					animals[animalIndex].body[cellNeighbour].geneCursor = animals[animalIndex].body[cellLocalPositionI].geneCursor ; // the neighbour will choose a gene at genecursor+1 anyway
+					animals[animalIndex].body[cellNeighbour].growDirection = (1U << n);
+					animals[animalIndex].body[cellNeighbour].grown = false;
+				}
+			}
+		}
+
 		return;
 	}
 
 	else if (gene == GROW_END)
 	{
-		// end the current branch
 		animals[animalIndex].body[cellLocalPositionI].grown = true;
 		unsigned int sequenceNumber = animals[animalIndex].body[cellLocalPositionI].sequenceNumber ;
 		if (sequenceNumber > 0)                                                                                 // continue to repeat the sequence
@@ -366,9 +380,7 @@ void grow( int animalIndex, unsigned int cellLocalPositionI)
 		else                                                                                                      // end the current branch. this still works for nested branches and sequences.. ?
 		{
 			animals[animalIndex].body[     animals[animalIndex].body[cellLocalPositionI].origin      ].grown = false;   	// return to the previous branch by returning to the origin cell, and resuming from that cell's state of growth.
-			animals[animalIndex].body[     animals[animalIndex].body[cellLocalPositionI].origin      ].readyToSplit = false;
 			animals[animalIndex].body[     animals[animalIndex].body[cellLocalPositionI].origin      ].geneCursor = animals[animalIndex].body[cellLocalPositionI].geneCursor;
-
 		}
 		return;
 	}
@@ -398,23 +410,18 @@ void grow( int animalIndex, unsigned int cellLocalPositionI)
 
 	if (c < nNeighbours)                                                                                                                 // the gene is a direction, add it into the growth mask (lower 8 digits of the organ number), then fetch the next gene
 	{
-		animals[animalIndex].body[cellLocalPositionI].growDirection   ^= gene  ;
+		animals[animalIndex].body[cellLocalPositionI].growDirection  = gene  ;
 		return;
 	}
 	else                                                                                                                               // if the gene is a growable organ, grow it in this square, mark the square as completed, and then journey on to the activated neighbours
 	{
 		animals[animalIndex].body[cellLocalPositionI].organ      =  animals[animalIndex].body[cellLocalPositionI].organ | gene;
 		animals[animalIndex].mass++;
-
 		if (growingCostsEnergy)
 		{
 			animals[animalIndex].energyDebt += organGrowthCost(gene);
 		}
-
-		if (animals[animalIndex].body[cellLocalPositionI].growDirection != MATERIAL_NOTHING)                                            // mark the cell as grown only if it has gone in at least one direction (or reached the end of the sequence).
-		{
-			animals[animalIndex].body[cellLocalPositionI].grown = true;
-		}
+		animals[animalIndex].body[cellLocalPositionI].grown = true;
 		for (unsigned int n = 0; n < nNeighbours; ++n)
 		{
 			if ( ( animals[animalIndex].body[cellLocalPositionI].growDirection & (1U << n)) == (1U << n) )                               // if the growth mask says this neighbour is ready
@@ -422,20 +429,24 @@ void grow( int animalIndex, unsigned int cellLocalPositionI)
 				unsigned int cellNeighbour = cellLocalPositionI + cellNeighbourOffsets[n];
 				if (cellNeighbour < animalSquareSize)
 				{
-					if (animals[animalIndex].body[cellLocalPositionI].readyToSplit) // nested sequences and branches are compatible because only the main branch of the sequence carries the sequence number information.
+					animals[animalIndex].body[cellNeighbour].sequenceNumber     = animals[animalIndex].body[cellLocalPositionI].sequenceNumber;
+					animals[animalIndex].body[cellNeighbour].origin     = animals[animalIndex].body[cellLocalPositionI].origin;
+					animals[animalIndex].body[cellNeighbour].geneCursor = animals[animalIndex].body[cellLocalPositionI].geneCursor ; // the neighbour will choose a gene at genecursor+1 anyway
+					animals[animalIndex].body[cellNeighbour].growDirection = (1U << n);
+					animals[animalIndex].body[cellNeighbour].organ      =  animals[animalIndex].body[cellNeighbour].organ | gene;
+					animals[animalIndex].mass++;
+					if (growingCostsEnergy)
 					{
-						animals[animalIndex].body[cellNeighbour].sequenceNumber = 0;
-						animals[animalIndex].body[cellNeighbour].origin     = cellLocalPositionI;
+						animals[animalIndex].energyDebt += organGrowthCost(gene);
+					}
+					if (animals[animalIndex].body[cellNeighbour].growDirection != animals[animalIndex].body[cellLocalPositionI].growDirection)
+					{
+						animals[animalIndex].body[cellNeighbour].grown = true;
 					}
 					else
 					{
-						animals[animalIndex].body[cellNeighbour].sequenceNumber     = animals[animalIndex].body[cellLocalPositionI].sequenceNumber;
-						animals[animalIndex].body[cellNeighbour].origin     = animals[animalIndex].body[cellLocalPositionI].origin;
+						animals[animalIndex].body[cellNeighbour].grown = false;
 					}
-
-					animals[animalIndex].body[cellNeighbour].geneCursor = animals[animalIndex].body[cellLocalPositionI].geneCursor ; // the neighbour will choose a gene at genecursor+1 anyway
-					animals[animalIndex].body[cellNeighbour].growDirection = (1U << n);
-					animals[animalIndex].body[cellNeighbour].grown = false;
 				}
 			}
 		}
@@ -606,8 +617,6 @@ void sensor(int animalIndex, unsigned int cellWorldPositionX, unsigned int cellW
 		}
 		return;
 	}
-
-
 
 	float sign = 1;
 
@@ -784,7 +793,6 @@ int isAnimalInSquare(unsigned int animalIndex, unsigned int cellWorldPositionX, 
 
 int defenseAtPoint(unsigned int animalIndex, unsigned int cellLocalPositionI)
 {
-
 	int nBones = 0;
 	for (unsigned int n = 0; n < nNeighbours; ++n)
 	{
@@ -797,9 +805,7 @@ int defenseAtPoint(unsigned int animalIndex, unsigned int cellLocalPositionI)
 			}
 		}
 	}
-
 	return nBones * nBones;
-
 }
 
 void animalTurn( int animalIndex)
@@ -814,7 +820,6 @@ void animalTurn( int animalIndex)
 		animals[animalIndex].energy     -= amount;
 	}
 	else
-		// (animals[animalIndex].energy > (animals[animalIndex].mass / 2.0f))
 	{
 		for (unsigned int cellLocalPositionI = 0; cellLocalPositionI < animalSquareSize; ++cellLocalPositionI) // process organs and signals and clear animalIndex on grid
 		{
@@ -823,7 +828,6 @@ void animalTurn( int animalIndex)
 				grow( animalIndex,  cellLocalPositionI);
 			}
 		}
-
 	}
 
 	if (brownianMotion)
@@ -834,7 +838,6 @@ void animalTurn( int animalIndex)
 			animals[animalIndex].fPosX +=  ((RNG() - 0.5f) * 0.1f) / animals[animalIndex].mass;
 		}
 	}
-
 
 	if (animals[animalIndex].fPosX < 0.0f) {animals[animalIndex].fPosX = worldSize;}
 	else if (animals[animalIndex].fPosX > worldSize) { animals[animalIndex].fPosX = 0;}
@@ -852,12 +855,6 @@ void animalTurn( int animalIndex)
 			animals[animalIndex].position = newPosition;
 		}
 	}
-
-
-
-
-
-
 
 	unsigned int totalLiver = 0;
 	for (unsigned int cellLocalPositionI = 0; cellLocalPositionI < animalSquareSize; ++cellLocalPositionI)                                      // place animalIndex on grid and attack / eat. add captured energy
@@ -887,9 +884,7 @@ void animalTurn( int animalIndex)
 						}
 					}
 				}
-
 				animals[animalIndex].energy -= taxEnergyScale * energyScaleOut * organUpkeepCost(ORGAN_GONAD);
-
 			}
 
 			if ((animals[animalIndex].body[cellLocalPositionI].organ & ORGAN_LIVER) == ORGAN_LIVER )
@@ -967,8 +962,6 @@ void animalTurn( int animalIndex)
 						unsigned int cellNeighbour = cellLocalPositionI + cellNeighbourOffsets[n];
 						if (cellNeighbour < animalSquareSize)
 						{
-
-
 							if ( abs(animals[animalIndex].body[cellNeighbour].signalIntensity) > 0.001f && animals[animalIndex].body[cellNeighbour].signalLocation != 0)
 							{
 								float angle = getRelativeDirection( animals[animalIndex].position, animals[animalIndex].body[cellNeighbour].signalLocation  );
@@ -1031,13 +1024,8 @@ void animalTurn( int animalIndex)
 								{
 									world[cellWorldPositionI].material = MATERIAL_FOOD;
 								}
-
-
-
 							}
 						}
-
-
 					}
 					else
 					{
@@ -1049,36 +1037,20 @@ void animalTurn( int animalIndex)
 				{
 					world[cellWorldPositionI].identity = animalIndex;
 				}
-
-
-
 			}
 		}
 	}
 
-
 	animals[animalIndex].maxEnergy = animals[animalIndex].mass + (totalLiver * liverStorage);
 	if (animals[animalIndex].energy > animals[animalIndex].maxEnergy) {animals[animalIndex].energy = animals[animalIndex].maxEnergy;}
-
-
-
-
-
-
-
-
-
 // die
 	if (!immortality)
 	{
 		if (animals[animalIndex].energy < 0.0f ||
-		        animals[animalIndex].damageReceived > animals[animalIndex].mass
-		   )
+		        animals[animalIndex].damageReceived > animals[animalIndex].mass)
 		{
-
 			killAnimal( animalIndex);
 			return;
-
 		}
 	}
 
@@ -1089,19 +1061,16 @@ void animalTurn( int animalIndex)
 		{
 			championScore = animalScore;
 			champion = animalIndex;
-
 			for (int i = 0; i < genomeSize; ++i)
 			{
 				championGenes[i] = animals[animalIndex].genes[i];
 			}
 		}
 	}
-
 }
 
 void camera()
 {
-
 	for ( int vy = viewFieldY - 1; vy >= 0; --vy) // correct for Y axis inversion
 	{
 		for ( int vx = 0; vx < viewFieldX; ++vx)
@@ -1112,15 +1081,11 @@ void camera()
 				unsigned int creatureY = animals[cameraTargetCreature].position / worldSize;
 				cameraPositionX = creatureX - (viewFieldX / 2) % worldSize;
 				cameraPositionY = creatureY - (viewFieldY / 2) % worldSize;
-
 				if (animals[cameraTargetCreature].retired)
 				{
 					cameraTargetCreature = -1;
 				}
 			}
-
-
-
 			if (cameraFollowsChampion)
 			{
 				if (champion >= 0)
@@ -1146,22 +1111,13 @@ void camera()
 						}
 					}
 				}
-
 			}
-
 			unsigned int worldX = (cameraPositionX + vx) % worldSize; // center the view on the targeted position, instead of having it in the corner
 			unsigned int worldY = (cameraPositionY + vy) % worldSize;
 			unsigned int worldI = (worldY * worldSize) + worldX;
-
 			char displayChar = ' ';
-
 			if (worldI < worldSquareSize && worldX < worldSize && worldY < worldSize)
 			{
-				// if (world[worldI].material == MATERIAL_LIGHT)
-				// {
-				// 	displayChar = '.';
-				// }
-				// else
 				if (world[worldI].material == MATERIAL_ROCK)
 				{
 					displayChar = '#';
@@ -1177,17 +1133,9 @@ void camera()
 
 				if (world[worldI].identity > -1)
 				{
-
-
 					if (world[worldI].identity == cameraTargetCreature)
 					{
 						displayChar = '-';
-
-						// if (world[worldI].material == MATERIAL_LIGHT)
-						// {
-						// 	displayChar = '.';
-						// }
-						// else
 						if (world[worldI].material == MATERIAL_ROCK)
 						{
 							displayChar = '#';
@@ -1200,7 +1148,6 @@ void camera()
 						{
 							displayChar = '~';
 						}
-
 					}
 					else
 					{
@@ -1216,47 +1163,6 @@ void camera()
 							{
 								displayChar = '?';
 							}
-
-
-
-							// #define MATERIAL_NOTHING          0             // 0 is a generic null, nothing item.
-							// #define DIRECTION_L               1 << 0  // A  // genes 1 to (1 << nNeighbours) are directions, which are both gene instructions and used widely in the game as a direction concept.
-							// #define DIRECTION_DL              1 << 1  // B
-							// #define DIRECTION_D               1 << 2  // C
-							// #define DIRECTION_DR              1 << 3  // D
-							// #define DIRECTION_R               1 << 4  // E
-							// #define DIRECTION_UR              1 << 5  // F
-							// #define DIRECTION_U               1 << 6  // G
-							// #define DIRECTION_UL              1 << 7  // H
-							// #define ORGAN_LEAF                1 << 8  // I   // genes from here are organ types, they must go no higher than 26 so they correspond to a gene letter.
-							// #define ORGAN_MOUTH               1 << 9  // J
-							// #define ORGAN_GONAD               1 << 10 // K
-							// #define ORGAN_MUSCLE              1 << 11 // L
-							// #define ORGAN_BONE                1 << 12 // M
-							// #define ORGAN_WEAPON              1 << 13 // N
-							// #define ORGAN_LIVER               1 << 14 // O
-							// #define ORGAN_SENSOR_FOOD         1 << 15 // P
-							// #define ORGAN_SENSOR_CREATURE     1 << 16 // Q
-							// #define ORGAN_SENSOR_LIGHT        1 << 17 // R
-							// #define ORGAN_SENSOR_RANDOM       1 << 18 // S
-							// #define ORGAN_SENSOR_INVERT       1 << 19 // T
-							// #define ORGAN_SENSOR_PARENT       1 << 20 // U
-							// #define ORGAN_SENSOR_HOME         1 << 21 // V
-							// #define GROW_BRANCH               1 << 22 // W   // these genes are meta instructions that control how the gene sequence should be read.
-							// #define GROW_END                  1 << 23 // X
-							// #define GROW_ADDOFFSPRINGENERGY   1 << 24 // Y
-							// #define GROW_STRIDE               1 << 25 // Z
-							// #define GROW_SEQUENCE             1 << 26 // [
-							// #define MATERIAL_LIGHT            1 << 27 //     // materials and other things that are not part of the creature can range between 26 and 31, which is the max if we use unsigned int.
-							// #define MATERIAL_FOOD             1 << 28 //
-							// #define MATERIAL_ROCK             1 << 29 //
-							// #define MATERIAL_WATER            1 << 30 //
-							// #define MARKER                    1 << 31 //      // numbers above 25 don't correspond to lower-case letters(0..25) so we don't use them in the gene code. But (26..31) are still compatible with our masking scheme.
-
-
-
-
-
 							if ((animals[   world[worldI].identity  ].body[targetLocalPositionI].organ & DIRECTION_L           ) == DIRECTION_L)           { displayChar = '<'; }
 							if ((animals[   world[worldI].identity  ].body[targetLocalPositionI].organ & DIRECTION_DL          ) == DIRECTION_DL)          { displayChar = '['; }
 							if ((animals[   world[worldI].identity  ].body[targetLocalPositionI].organ & DIRECTION_D           ) == DIRECTION_D)           { displayChar = 'V'; }
@@ -1265,7 +1171,6 @@ void camera()
 							if ((animals[   world[worldI].identity  ].body[targetLocalPositionI].organ & DIRECTION_UR          ) == DIRECTION_UR)          { displayChar = '}'; }
 							if ((animals[   world[worldI].identity  ].body[targetLocalPositionI].organ & DIRECTION_U           ) == DIRECTION_U)           { displayChar = '^'; }
 							if ((animals[   world[worldI].identity  ].body[targetLocalPositionI].organ & DIRECTION_UL          ) == DIRECTION_UL)          { displayChar = '{'; }
-
 							if ((animals[   world[worldI].identity  ].body[targetLocalPositionI].organ & ORGAN_LIVER )           == ORGAN_LIVER)           { displayChar = 'L'; }
 							if ((animals[   world[worldI].identity  ].body[targetLocalPositionI].organ & ORGAN_BONE )            == ORGAN_BONE)            { displayChar = 'B'; }
 							if ((animals[   world[worldI].identity  ].body[targetLocalPositionI].organ & ORGAN_WEAPON )          == ORGAN_WEAPON)          { displayChar = 'W'; }
@@ -1287,11 +1192,9 @@ void camera()
 							if ((animals[   world[worldI].identity  ].body[targetLocalPositionI].organ & GROW_STRIDE             ) == GROW_STRIDE)             { displayChar = '#'; }
 							if ((animals[   world[worldI].identity  ].body[targetLocalPositionI].organ & GROW_SEQUENCE           ) == GROW_SEQUENCE)           { displayChar = '$'; }
 							if ((animals[   world[worldI].identity  ].body[targetLocalPositionI].organ & GROW_ADDOFFSPRINGENERGY ) == GROW_ADDOFFSPRINGENERGY) { displayChar = '%'; }
-							// if ((animals[   world[worldI].identity  ].body[targetLocalPositionI].organ & MATERIAL_LIGHT          ) == MATERIAL_LIGHT)          { displayChar = '^'; }
 							if ((animals[   world[worldI].identity  ].body[targetLocalPositionI].organ & MATERIAL_FOOD           ) == MATERIAL_ROCK)           { displayChar = '&'; }
 							if ((animals[   world[worldI].identity  ].body[targetLocalPositionI].organ & MATERIAL_WATER          ) == MATERIAL_WATER)          { displayChar = '*'; }
 							if ((animals[   world[worldI].identity  ].body[targetLocalPositionI].organ & MARKER                  ) == MARKER)                  { displayChar = '('; }
-
 						}
 					}
 				}
@@ -1333,53 +1236,23 @@ void populationController()
 	}
 }
 
-
-
 void regenerateKnights()
 {
 	for (unsigned int i = 0; i < numberOfKnights; ++i)	// initial random creatures.
 	{
 		unsigned int targetWorldPositionX = extremelyFastNumberFromZeroTo(worldSize - 1);
 		unsigned int targetWorldPositionY = extremelyFastNumberFromZeroTo(worldSize - 1);
-//
 		unsigned int targetWorldPositionI = ( targetWorldPositionY * worldSize ) + targetWorldPositionX;
-
-
-
-		// int newAnimal = spawnAnimal( exampleAnimal, targetWorldPositionI, true);
-
 		spawnAnimalIntoSlot( i,  championGenes, targetWorldPositionI, true);
-
-
-		// if (newAnimal >= 0)
-		// {
-		// animals[newAnimal].energy = 8.0f;
-
-
-
-		// 	// if (tournament)
-		// 	// {
 		if (champion < 0 || champion > numberOfAnimals)
 		{
 			for (int j = 0; j < genomeSize; ++j)
 			{
-				// animals[newAnimal].genes[j] = championGenes[j];
 				animals[i].genes[j] = randomLetter();
-				// }
 			}
 		}
-		// 	else
-		// 	{
-		// 		animals[newAnimal].genes[j] = randomLetter();
-		// 	}
-		// 	// }
-		// }
-		// mutateGenes(newAnimal);
-		// }
 	}
 }
-
-
 
 void setupTournamentAnimals()
 {
@@ -1387,31 +1260,18 @@ void setupTournamentAnimals()
 	{
 		unsigned int targetWorldPositionX = extremelyFastNumberFromZeroTo(worldSize - 1);
 		unsigned int targetWorldPositionY = extremelyFastNumberFromZeroTo(worldSize - 1);
-//
 		unsigned int targetWorldPositionI = ( targetWorldPositionY * worldSize ) + targetWorldPositionX;
 		int newAnimal = spawnAnimal( exampleAnimal, targetWorldPositionI, true);
 		if (newAnimal >= 0)
 		{
 			animals[newAnimal].energy = 8.0f;
-
 			for (int j = 0; j < genomeSize; ++j)
 			{
-
 				animals[newAnimal].genes[j] = randomLetter();
-
-				// if (tournament)
-				// {
-				// 	if (champion > 0 && champion < numberOfAnimals)
-				// 	{
-				// 		animals[newAnimal].genes[j] = championGenes[j];
-				// 	}
-				// }
 			}
-			// mutateGenes(newAnimal);
 		}
 	}
 }
-
 
 char geneCodeToChar( unsigned int gene )
 {
@@ -1422,7 +1282,6 @@ char geneCodeToChar( unsigned int gene )
 			return (char)('A' + n);
 		}
 	}
-
 	return (char)('A' + 27); // MATERIAL_NOTHING
 }
 
@@ -1442,17 +1301,9 @@ void setupRandomWorld()
 	if (RNG() < 0.5f) {rn_z = !rn_z;}
 	if (RNG() < 0.5f) {rn_a = !rn_a;}
 
-
-
-
 	// spawn the example creature in the center field of view in an empty world.
 	if (worldToLoad == WORLD_EXAMPLECREATURE)
 	{
-		for (int i = 0; i < worldSquareSize; ++i)
-		{
-			// world[i].material = MATERIAL_LIGHT;
-		}
-
 		if (false)
 		{
 			printf("placing materials\n");
@@ -1463,18 +1314,6 @@ void setupRandomWorld()
 				unsigned int x = worldPositionI % worldSize;
 				unsigned int y = worldPositionI / worldSize;
 
-				// if (extremelyFastNumberFromZeroTo(1000) == 0)
-				// {
-				// 	// world[worldPositionI].material = MATERIAL_LIGHT;
-				// 	for (unsigned int n = 0; n < nNeighbours; ++n)
-				// 	{
-				// 		unsigned int worldNeighbour = worldPositionI + neighbourOffsets[n];
-				// 		if (worldNeighbour < worldSquareSize)
-				// 		{
-				// 			// world[worldNeighbour].material = MATERIAL_LIGHT;
-				// 		}
-				// 	}
-				// }
 				if (extremelyFastNumberFromZeroTo(50) == 0)
 				{
 					world[worldPositionI].material = MATERIAL_FOOD;
@@ -1576,9 +1415,6 @@ void setupRandomWorld()
 			animals[animalIndex].genes[4]  = geneCodeToChar(ORGAN_BONE ) ;//   'M';
 			animals[animalIndex].genes[5]  = geneCodeToChar(ORGAN_BONE ) ;//   'M';
 			animals[animalIndex].genes[6]  = geneCodeToChar(ORGAN_BONE ) ;//   'M';
-			animals[animalIndex].genes[7]  = geneCodeToChar(DIRECTION_DR ) ;//   'D';
-			animals[animalIndex].genes[8]  = geneCodeToChar(DIRECTION_L ) ;//   'A';
-			animals[animalIndex].genes[8]  = geneCodeToChar(DIRECTION_R ) ;//   'E';
 			animals[animalIndex].genes[9]  = geneCodeToChar(ORGAN_MOUTH ) ;//   'J';
 			// animals[animalIndex].genes[10]  = 'x';
 			// animals[animalIndex].genes[11]  = 'l';
@@ -1662,12 +1498,7 @@ void setupRandomWorld()
 
 		setupTournamentAnimals();
 		regenerateKnights();
-
-
-		// cameraTargetCreature = RNG() * numberOfAnimals / 2;
 	}
-
-
 }
 
 void model()
@@ -1682,10 +1513,8 @@ void model()
 			animalTurn(animalIndex);
 		}
 	}
-
 	populationCount = newPopulationCount;
 	populationController();
-
 	if (tournament)
 	{
 		if (tournamentCounter >= tournamentInterval )
@@ -1698,15 +1527,11 @@ void model()
 			tournamentCounter++;
 		}
 	}
-
 	modelFrameCount++;
-
 	auto end = std::chrono::steady_clock::now();
 	auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
 	threadTimer = elapsed.count();
 }
-
-
 
 void interfaceSupervisor()
 {
@@ -1716,10 +1541,7 @@ void interfaceSupervisor()
 		{
 			model();
 		}
-
-
 		camera();
-
 		usleep(50000);
 		cameraFrameCount++;
 	}
