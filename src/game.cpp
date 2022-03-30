@@ -365,10 +365,22 @@ void setupExampleAnimal(unsigned int animalIndex)
 	animals[animalIndex].genes[4]  = geneCodeToChar(ORGAN_BONE )  ;
 	animals[animalIndex].genes[5]  = geneCodeToChar(ORGAN_BONE )  ;
 	animals[animalIndex].genes[6]  = geneCodeToChar(ORGAN_BONE )  ;
-	animals[animalIndex].genes[7]  = geneCodeToChar(DIRECTION_U ) ;
-	animals[animalIndex].genes[8]  = geneCodeToChar(DIRECTION_D ) ;
-	animals[animalIndex].genes[9]  = geneCodeToChar(GROW_BRANCH ) ;
-	animals[animalIndex].genes[10]  = geneCodeToChar(ORGAN_BONE )  ;
+	animals[animalIndex].genes[7]  = geneCodeToChar(ORGAN_WEAPON )  ;
+	animals[animalIndex].genes[8]  = geneCodeToChar(DIRECTION_U ) ;
+	animals[animalIndex].genes[9]  = geneCodeToChar(DIRECTION_D ) ;
+	animals[animalIndex].genes[10]  = geneCodeToChar(GROW_BRANCH ) ;
+	animals[animalIndex].genes[11]  = geneCodeToChar(ORGAN_BONE )  ;
+	animals[animalIndex].genes[12]  = geneCodeToChar(GROW_END )  ;
+	animals[animalIndex].genes[13]  = geneCodeToChar(ORGAN_SENSOR_LIGHT )  ;
+	// animals[animalIndex].genes[12]  = geneCodeToChar(GROW_END )  ;
+
+	// animals[animalIndex].genes[8]  = geneCodeToChar(DIRECTION_D ) ;
+
+	// animals[animalIndex].genes[4]  = geneCodeToChar(ORGAN_GONAD )  ;
+	// animals[animalIndex].genes[5]  = geneCodeToChar(ORGAN_GONAD )  ;
+	// animals[animalIndex].genes[6]  = geneCodeToChar(ORGAN_GONAD )  ;
+
+
 
 
 	animals[animalIndex].energy = 8.0f;
@@ -407,17 +419,23 @@ void grow( int animalIndex, unsigned int cellLocalPositionI)
 	else if (gene == GROW_END)
 	{
 		animals[animalIndex].body[cellLocalPositionI].grown = true;
-		unsigned int sequenceNumber = animals[animalIndex].body[cellLocalPositionI].sequenceNumber ;
-		if (sequenceNumber > 0)                                                                                 // continue to repeat the sequence
-		{
-			animals[animalIndex].body[cellLocalPositionI] = animals[animalIndex].body[     animals[animalIndex].body[cellLocalPositionI].origin      ];
-			animals[animalIndex].body[cellLocalPositionI].sequenceNumber = sequenceNumber - 1;
-		}
-		else                                                                                                      // end the current branch. this still works for nested branches and sequences.. ?
-		{
+		// unsigned int sequenceNumber = animals[animalIndex].body[cellLocalPositionI].sequenceNumber ;
+		// if (sequenceNumber > 0)                                                                                 // continue to repeat the sequence
+		// {
+		// 	// animals[animalIndex].body[cellLocalPositionI] = animals[animalIndex].body[     animals[animalIndex].body[cellLocalPositionI].origin      ];
+		// 	animals[animalIndex].body[cellLocalPositionI].sequenceNumber = sequenceNumber - 1;
+		// }
+		// else                                                                                                      // end the current branch. this still works for nested branches and sequences.. ?
+		// {
+			
+// animals[animalIndex].body[     animals[animalIndex].body[cellLocalPositionI].origin      ].organ = ORGAN_WEAPON;
+
+
+			// animals[animalIndex].body[     animals[animalIndex].body[cellLocalPositionI].origin      ].growthMask = false; 
 			animals[animalIndex].body[     animals[animalIndex].body[cellLocalPositionI].origin      ].grown = false;   	// return to the previous branch by returning to the origin cell, and resuming from that cell's state of growth.
 			animals[animalIndex].body[     animals[animalIndex].body[cellLocalPositionI].origin      ].geneCursor = animals[animalIndex].body[cellLocalPositionI].geneCursor;
-		}
+			// animals[animalIndex].body[     animals[animalIndex].body[cellLocalPositionI].origin      ].growthMask = animals[animalIndex].body[     animals[animalIndex].body[cellLocalPositionI].origin      ].growDirection ;//0x00;
+		// }
 		return;
 	}
 
@@ -485,9 +503,10 @@ void grow( int animalIndex, unsigned int cellLocalPositionI)
 
 		// if the current cell does not have that organ type, add it in
 		// if it does have it, do not add it in, and mark the neighbour to grow, SETTING THE GENE CURSOR BACK ONE PLACE so the neighbour gets the gene instead.
-		if (!animals[animalIndex].body[cellLocalPositionI].grown && ((animals[animalIndex].body[cellLocalPositionI].organ  & gene ) != gene))
+		// if (!animals[animalIndex].body[cellLocalPositionI].grown && ((animals[animalIndex].body[cellLocalPositionI].organ  & gene ) != gene))
+		if (animals[animalIndex].body[cellLocalPositionI].organ == MATERIAL_NOTHING)
 		{
-			animals[animalIndex].body[cellLocalPositionI].organ = animals[animalIndex].body[cellLocalPositionI].organ | gene;
+			animals[animalIndex].body[cellLocalPositionI].organ ^= gene;
 			// }
 		}
 		else
@@ -495,14 +514,14 @@ void grow( int animalIndex, unsigned int cellLocalPositionI)
 
 			for (unsigned int n = 0; n < nNeighbours; ++n)
 			{
-				if ( ( animals[animalIndex].body[cellLocalPositionI].growDirection & (1U << n)) == (1U << n) )                               // if the growth mask says this neighbour is ready
+				if (  animals[animalIndex].body[cellLocalPositionI].growDirection == (1U << n) )                               // if the growth mask says this neighbour is ready
 				{
 					unsigned int cellNeighbour = cellLocalPositionI + cellNeighbourOffsets[n];
 					if (cellNeighbour < animalSquareSize)
 					{
 						animals[animalIndex].body[cellNeighbour].sequenceNumber     = animals[animalIndex].body[cellLocalPositionI].sequenceNumber;
 						animals[animalIndex].body[cellNeighbour].origin     = animals[animalIndex].body[cellLocalPositionI].origin;
-						animals[animalIndex].body[cellNeighbour].geneCursor = animals[animalIndex].body[cellLocalPositionI].geneCursor - 1; // the neighbour will choose a gene at genecursor+1 anyway
+						animals[animalIndex].body[cellNeighbour].geneCursor = animals[animalIndex].body[cellLocalPositionI].geneCursor - 1; // the neighbour will choose a gene at genecursor+1 anyway, so its like it gets the same gene as you just had.
 						animals[animalIndex].body[cellNeighbour].growDirection = (1U << n);
 						animals[animalIndex].body[cellNeighbour].growthMask = animals[animalIndex].body[cellLocalPositionI].growthMask ;
 						animals[animalIndex].body[cellNeighbour].grown = false;
