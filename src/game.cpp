@@ -81,7 +81,7 @@ const unsigned int viewFieldX = 203; // 80 columns, 24 rows is the default size 
 const unsigned int viewFieldY = 55 - 3;  // 203 columns, 55 rows is the max size i can make one on my pc.
 const unsigned int viewFieldSize = viewFieldX * viewFieldY;
 
-const int animalSize     = 16;
+const int animalSize     = 32;
 const unsigned int animalSquareSize      = animalSize * animalSize;
 const int worldSize      = 512;
 const unsigned int worldSquareSize       = worldSize * worldSize;
@@ -360,24 +360,38 @@ void setupExampleAnimal(unsigned int animalIndex)
 
 
 	animals[animalIndex].genes[1]  = geneCodeToChar(DIRECTION_L ) ;
-	animals[animalIndex].genes[2]  = geneCodeToChar(DIRECTION_R ) ;
-	animals[animalIndex].genes[3]  = geneCodeToChar(GROW_BRANCH ) ;
-	animals[animalIndex].genes[4]  = geneCodeToChar(ORGAN_BONE )  ;
-	animals[animalIndex].genes[5]  = geneCodeToChar(ORGAN_BONE )  ;
-	animals[animalIndex].genes[6]  = geneCodeToChar(ORGAN_BONE )  ;
-	animals[animalIndex].genes[7]  = geneCodeToChar(ORGAN_WEAPON )  ;
-	animals[animalIndex].genes[8]  = geneCodeToChar(DIRECTION_U ) ;
-	animals[animalIndex].genes[9]  = geneCodeToChar(DIRECTION_D ) ;
-	animals[animalIndex].genes[10]  = geneCodeToChar(GROW_BRANCH ) ;
-	animals[animalIndex].genes[11]  = geneCodeToChar(ORGAN_BONE )  ;
-	animals[animalIndex].genes[12]  = geneCodeToChar(GROW_END )  ;
-	animals[animalIndex].genes[13]  = geneCodeToChar(ORGAN_SENSOR_LIGHT )  ;
+	animals[animalIndex].genes[2]  = geneCodeToChar(GROW_BRANCH ) ;
+	animals[animalIndex].genes[3]  = geneCodeToChar(ORGAN_BONE ) ;
+	animals[animalIndex].genes[4]  = geneCodeToChar(ORGAN_BONE ) ;
+	animals[animalIndex].genes[5]  = geneCodeToChar(ORGAN_BONE ) ;
+	animals[animalIndex].genes[6]  = geneCodeToChar(ORGAN_BONE ) ;
+	animals[animalIndex].genes[7]  = geneCodeToChar(DIRECTION_D ) ;
+	animals[animalIndex].genes[8]  = geneCodeToChar(GROW_SEQUENCE ) ;
+	animals[animalIndex].genes[9]  = 'A' + 5;//geneCodeToChar(GROW_SEQUENCE )  ;
+	animals[animalIndex].genes[10]  = geneCodeToChar(ORGAN_SENSOR_LIGHT )  ;
+	animals[animalIndex].genes[11]  = geneCodeToChar(ORGAN_MOUTH )  ;
+	animals[animalIndex].genes[12]  = geneCodeToChar(ORGAN_WEAPON )  ;
+	animals[animalIndex].genes[13]  = geneCodeToChar(GROW_END )  ;
+
+	// animals[animalIndex].genes[7]  = geneCodeToChar(ORGAN_WEAPON )  ;
+	// animals[animalIndex].genes[4]  = geneCodeToChar(ORGAN_BONE )  ;
+	// animals[animalIndex].genes[5]  = geneCodeToChar(ORGAN_BONE )  ;
+	// animals[animalIndex].genes[6]  = geneCodeToChar(ORGAN_BONE )  ;
+	// animals[animalIndex].genes[7]  = geneCodeToChar(ORGAN_WEAPON )  ;
+	// animals[animalIndex].genes[8]  = geneCodeToChar(DIRECTION_U ) ;
+	// animals[animalIndex].genes[9]  = geneCodeToChar(DIRECTION_D ) ;
+	// animals[animalIndex].genes[10]  = geneCodeToChar(GROW_BRANCH ) ;
+	// animals[animalIndex].genes[11]  = geneCodeToChar(ORGAN_BONE )  ;
 	// animals[animalIndex].genes[12]  = geneCodeToChar(GROW_END )  ;
+	// animals[animalIndex].genes[13]  = geneCodeToChar(ORGAN_SENSOR_LIGHT )  ;
+	// animals[animalIndex].genes[14]  = geneCodeToChar(GROW_SEQUENCE )  ;
+	// animals[animalIndex].genes[15]  = 'A' + 5;//geneCodeToChar(GROW_SEQUENCE )  ;
+	// animals[animalIndex].genes[16]  = geneCodeToChar(ORGAN_MOUTH )  ;
+	// animals[animalIndex].genes[17]  = geneCodeToChar(ORGAN_LIVER )  ;
+	// animals[animalIndex].genes[18]  = geneCodeToChar(GROW_END )  ;
 
-	// animals[animalIndex].genes[8]  = geneCodeToChar(DIRECTION_D ) ;
+	// // animals[animalIndex].genes[8]  = geneCodeToChar(DIRECTION_D ) ;
 
-	// animals[animalIndex].genes[4]  = geneCodeToChar(ORGAN_GONAD )  ;
-	// animals[animalIndex].genes[5]  = geneCodeToChar(ORGAN_GONAD )  ;
 	// animals[animalIndex].genes[6]  = geneCodeToChar(ORGAN_GONAD )  ;
 
 
@@ -418,9 +432,50 @@ void grow( int animalIndex, unsigned int cellLocalPositionI)
 
 	else if (gene == GROW_END)
 	{
-		animals[animalIndex].body[cellLocalPositionI].grown = true;
-		animals[animalIndex].body[     animals[animalIndex].body[cellLocalPositionI].origin      ].grown = false;   	// return to the previous branch by returning to the origin cell, and resuming from that cell's state of growth.
-		animals[animalIndex].body[     animals[animalIndex].body[cellLocalPositionI].origin      ].geneCursor = animals[animalIndex].body[cellLocalPositionI].geneCursor;
+
+		unsigned int sequenceNumber = animals[animalIndex].body[cellLocalPositionI].sequenceNumber-1;
+		if (sequenceNumber > 0)
+		{
+
+
+
+
+			for (unsigned int n = 0; n < nNeighbours; ++n)
+			{
+				if ( ( animals[animalIndex].body[cellLocalPositionI].growDirection & (1U << n)) == (1U << n) )                               // if the growth mask says this neighbour is ready
+				{
+					unsigned int cellNeighbour = cellLocalPositionI + cellNeighbourOffsets[n];
+					if (cellNeighbour < animalSquareSize)
+					{
+						// animals[animalIndex].body[cellNeighbour].sequenceNumber = animals[animalIndex].body[cellLocalPositionI].sequenceNumber;
+						// animals[animalIndex].body[cellNeighbour].origin     = cellLocalPositionI;
+						// animals[animalIndex].body[cellNeighbour].geneCursor = animals[animalIndex].body[cellLocalPositionI].geneCursor ; // the neighbour will choose a gene at genecursor+1 anyway
+						// animals[animalIndex].body[cellNeighbour].growDirection = (1U << n);
+						// animals[animalIndex].body[cellNeighbour].growthMask = animals[animalIndex].body[cellLocalPositionI].growthMask;
+						// animals[animalIndex].body[cellNeighbour].grown = false;
+
+						animals[animalIndex].body[cellNeighbour] = animals[animalIndex].body[     animals[animalIndex].body[cellLocalPositionI].origin      ];
+						animals[animalIndex].body[cellNeighbour].geneCursor--;
+						animals[animalIndex].body[cellNeighbour].sequenceNumber = sequenceNumber;// - 1;
+						animals[animalIndex].body[cellNeighbour].grown = false;
+					}
+				}
+			}
+
+
+
+
+
+
+		}
+		else
+		{
+			animals[animalIndex].body[cellLocalPositionI].grown = true;
+			animals[animalIndex].body[     animals[animalIndex].body[cellLocalPositionI].origin      ].grown = false;   	// return to the previous branch by returning to the origin cell, and resuming from that cell's state of growth.
+			animals[animalIndex].body[     animals[animalIndex].body[cellLocalPositionI].origin      ].geneCursor = animals[animalIndex].body[cellLocalPositionI].geneCursor;
+		}
+
+		// printf("animals[animalIndex].body[cellLocalPositionI].sequenceNumber  %u \n ",animals[animalIndex].body[cellLocalPositionI].sequenceNumber );
 		return;
 	}
 
@@ -444,6 +499,29 @@ void grow( int animalIndex, unsigned int cellLocalPositionI)
 		animals[animalIndex].body[cellLocalPositionI].geneCursor ++;
 		if (animals[animalIndex].body[cellLocalPositionI].geneCursor >= genomeSize) { animals[animalIndex].body[cellLocalPositionI].grown = true; return; }
 		animals[animalIndex].body[cellLocalPositionI].sequenceNumber  = animals[animalIndex].genes[ animals[animalIndex].body[cellLocalPositionI].geneCursor ] - 'A';
+		// printf("animals[animalIndex].body[cellLocalPositionI].sequenceNumber  %u \n ",animals[animalIndex].body[cellLocalPositionI].sequenceNumber );
+
+
+
+		for (unsigned int n = 0; n < nNeighbours; ++n)
+		{
+			if ( ( animals[animalIndex].body[cellLocalPositionI].growthMask & (1U << n)) == (1U << n) )                               // if the growth mask says this neighbour is ready
+			{
+				unsigned int cellNeighbour = cellLocalPositionI + cellNeighbourOffsets[n];
+				if (cellNeighbour < animalSquareSize)
+				{
+					animals[animalIndex].body[cellNeighbour].sequenceNumber = animals[animalIndex].body[cellLocalPositionI].sequenceNumber;
+					animals[animalIndex].body[cellNeighbour].origin     = cellNeighbour;
+					animals[animalIndex].body[cellNeighbour].geneCursor = animals[animalIndex].body[cellLocalPositionI].geneCursor ; // the neighbour will choose a gene at genecursor+1 anyway
+					animals[animalIndex].body[cellNeighbour].growDirection = (1U << n);
+					animals[animalIndex].body[cellNeighbour].growthMask = 0x00;//animals[animalIndex].body[cellLocalPositionI].growthMask;
+					animals[animalIndex].body[cellNeighbour].grown = false;
+				}
+			}
+		}
+		animals[animalIndex].body[cellLocalPositionI].grown = true;
+		animals[animalIndex].body[cellLocalPositionI].growthMask = 0x00;
+
 		return;
 	}
 
