@@ -352,59 +352,32 @@ char geneCodeToChar( unsigned int gene )
 
 void setupExampleAnimal(unsigned int animalIndex)
 {
-
 	for (int i = 0; i < genomeSize; ++i)
 	{
 		animals[animalIndex].genes[i] = geneCodeToChar( MATERIAL_NOTHING);
 	}
-
-
 	animals[animalIndex].genes[1]  = geneCodeToChar(DIRECTION_L ) ;
 	animals[animalIndex].genes[2]  = geneCodeToChar(GROW_BRANCH ) ;
 	animals[animalIndex].genes[3]  = geneCodeToChar(ORGAN_BONE ) ;
-	animals[animalIndex].genes[4]  = geneCodeToChar(ORGAN_BONE ) ;
-	animals[animalIndex].genes[5]  = geneCodeToChar(ORGAN_BONE ) ;
-	animals[animalIndex].genes[6]  = geneCodeToChar(ORGAN_BONE ) ;
-	animals[animalIndex].genes[7]  = geneCodeToChar(DIRECTION_D ) ;
-	animals[animalIndex].genes[8]  = geneCodeToChar(GROW_SEQUENCE ) ;
-	animals[animalIndex].genes[9]  = 'A' + 5;//geneCodeToChar(GROW_SEQUENCE )  ;
-	animals[animalIndex].genes[10]  = geneCodeToChar(ORGAN_SENSOR_LIGHT )  ;
-	animals[animalIndex].genes[11]  = geneCodeToChar(ORGAN_MOUTH )  ;
-	animals[animalIndex].genes[12]  = geneCodeToChar(DIRECTION_L ) ;
-	animals[animalIndex].genes[13]  = geneCodeToChar(GROW_BRANCH ) ;
-	animals[animalIndex].genes[14]  = geneCodeToChar(ORGAN_GONAD )  ;
-	animals[animalIndex].genes[15]  = geneCodeToChar(ORGAN_GONAD )  ;
-	animals[animalIndex].genes[16]  = geneCodeToChar(ORGAN_GONAD )  ;
-	animals[animalIndex].genes[17]  = geneCodeToChar(ORGAN_GONAD )  ;
-	animals[animalIndex].genes[18]  = geneCodeToChar(GROW_END )  ;
-	animals[animalIndex].genes[19]  = geneCodeToChar(ORGAN_MOUTH )  ;
-	animals[animalIndex].genes[20]  = geneCodeToChar(ORGAN_WEAPON )  ;
-	animals[animalIndex].genes[21]  = geneCodeToChar(GROW_END )  ;
-
-	// animals[animalIndex].genes[7]  = geneCodeToChar(ORGAN_WEAPON )  ;
-	// animals[animalIndex].genes[4]  = geneCodeToChar(ORGAN_BONE )  ;
-	// animals[animalIndex].genes[5]  = geneCodeToChar(ORGAN_BONE )  ;
-	// animals[animalIndex].genes[6]  = geneCodeToChar(ORGAN_BONE )  ;
-	// animals[animalIndex].genes[7]  = geneCodeToChar(ORGAN_WEAPON )  ;
-	// animals[animalIndex].genes[8]  = geneCodeToChar(DIRECTION_U ) ;
-	// animals[animalIndex].genes[9]  = geneCodeToChar(DIRECTION_D ) ;
-	// animals[animalIndex].genes[10]  = geneCodeToChar(GROW_BRANCH ) ;
-	// animals[animalIndex].genes[11]  = geneCodeToChar(ORGAN_BONE )  ;
-	// animals[animalIndex].genes[12]  = geneCodeToChar(GROW_END )  ;
-	// animals[animalIndex].genes[13]  = geneCodeToChar(ORGAN_SENSOR_LIGHT )  ;
-	// animals[animalIndex].genes[14]  = geneCodeToChar(GROW_SEQUENCE )  ;
-	// animals[animalIndex].genes[15]  = 'A' + 5;//geneCodeToChar(GROW_SEQUENCE )  ;
-	// animals[animalIndex].genes[16]  = geneCodeToChar(ORGAN_MOUTH )  ;
-	// animals[animalIndex].genes[17]  = geneCodeToChar(ORGAN_LIVER )  ;
-	// animals[animalIndex].genes[18]  = geneCodeToChar(GROW_END )  ;
-
-	// // animals[animalIndex].genes[8]  = geneCodeToChar(DIRECTION_D ) ;
-
-	// animals[animalIndex].genes[6]  = geneCodeToChar(ORGAN_GONAD )  ;
-
-
-
-
+	animals[animalIndex].genes[4]  = geneCodeToChar(DIRECTION_D ) ;
+	animals[animalIndex].genes[5]  = geneCodeToChar(GROW_SEQUENCE ) ;
+	animals[animalIndex].genes[6]  = 'A' + 5;
+	animals[animalIndex].genes[7]  = geneCodeToChar(ORGAN_SENSOR_LIGHT )  ;
+	animals[animalIndex].genes[8]  = geneCodeToChar(ORGAN_SENSOR_LIGHT )  ;
+	animals[animalIndex].genes[9]  = geneCodeToChar(ORGAN_SENSOR_LIGHT )  ;
+	animals[animalIndex].genes[10]  = geneCodeToChar(GROW_END )  ;
+	animals[animalIndex].genes[11]  = geneCodeToChar(ORGAN_GONAD ) ;
+	animals[animalIndex].genes[12]  = geneCodeToChar(ORGAN_GONAD ) ;
+	animals[animalIndex].genes[13]  = geneCodeToChar(ORGAN_GONAD ) ;
+	animals[animalIndex].genes[14]  = geneCodeToChar(GROW_SEQUENCE ) ;
+	animals[animalIndex].genes[15]  = 'A' + 5;
+	animals[animalIndex].genes[16]  = geneCodeToChar(ORGAN_SENSOR_LIGHT )  ;
+	animals[animalIndex].genes[17]  = geneCodeToChar(ORGAN_SENSOR_LIGHT )  ;
+	animals[animalIndex].genes[18]  = geneCodeToChar(ORGAN_SENSOR_LIGHT )  ;
+	animals[animalIndex].genes[19]  = geneCodeToChar(GROW_END )  ;
+	animals[animalIndex].genes[20]  = geneCodeToChar(ORGAN_GONAD ) ;
+	animals[animalIndex].genes[21]  = geneCodeToChar(ORGAN_GONAD ) ;
+	animals[animalIndex].genes[22]  = geneCodeToChar(ORGAN_GONAD ) ;
 	animals[animalIndex].energy = 8.0f;
 }
 
@@ -424,7 +397,6 @@ void grow( int animalIndex, unsigned int cellLocalPositionI)
 				unsigned int cellNeighbour = cellLocalPositionI + cellNeighbourOffsets[n];
 				if (cellNeighbour < animalSquareSize)
 				{
-					animals[animalIndex].body[cellNeighbour].sequenceNumber = 0; // 
 					animals[animalIndex].body[cellNeighbour].origin     = cellLocalPositionI;
 					animals[animalIndex].body[cellNeighbour].geneCursor = animals[animalIndex].body[cellLocalPositionI].geneCursor ; // the neighbour will choose a gene at genecursor+1 anyway
 					animals[animalIndex].body[cellNeighbour].growDirection = (1U << n);
@@ -441,20 +413,19 @@ void grow( int animalIndex, unsigned int cellLocalPositionI)
 	else if (gene == GROW_END)
 	{
 
-		unsigned int sequenceNumber = animals[animalIndex].body[cellLocalPositionI].sequenceNumber;//-1;
+			unsigned int origin =   animals[animalIndex].body[cellLocalPositionI].origin  ;
+		 int sequenceNumber = 	animals[animalIndex].body[   origin    ].sequenceNumber;
+		
+
 		if (sequenceNumber == 0)
 		{
 			animals[animalIndex].body[cellLocalPositionI].grown = true;
-			animals[animalIndex].body[     animals[animalIndex].body[cellLocalPositionI].origin      ].grown = false;   	// return to the previous branch by returning to the origin cell, and resuming from that cell's state of growth.
-			animals[animalIndex].body[     animals[animalIndex].body[cellLocalPositionI].origin      ].geneCursor = animals[animalIndex].body[cellLocalPositionI].geneCursor;
+			animals[animalIndex].body[    origin      ].grown = false;   // if sequence number == 0, this is a branch, so finish working on this branch and return to the cell it originated from.
+			animals[animalIndex].body[    origin      ].geneCursor = animals[animalIndex].body[cellLocalPositionI].geneCursor;
 		}
-
-
-		else
+		else  if (sequenceNumber > 0)                                                             /// if sequence number > 0, you are in a sequence, start the sequence over again.
 		{
-
-
-
+			animals[animalIndex].body[  origin     ].sequenceNumber--;
 
 			for (unsigned int n = 0; n < nNeighbours; ++n)
 			{
@@ -463,29 +434,13 @@ void grow( int animalIndex, unsigned int cellLocalPositionI)
 					unsigned int cellNeighbour = cellLocalPositionI + cellNeighbourOffsets[n];
 					if (cellNeighbour < animalSquareSize)
 					{
-						// animals[animalIndex].body[cellNeighbour].sequenceNumber = animals[animalIndex].body[cellLocalPositionI].sequenceNumber;
-						// animals[animalIndex].body[cellNeighbour].origin     = cellLocalPositionI;
-						// animals[animalIndex].body[cellNeighbour].geneCursor = animals[animalIndex].body[cellLocalPositionI].geneCursor ; // the neighbour will choose a gene at genecursor+1 anyway
-						// animals[animalIndex].body[cellNeighbour].growDirection = (1U << n);
-						// animals[animalIndex].body[cellNeighbour].growthMask = animals[animalIndex].body[cellLocalPositionI].growthMask;
-						// animals[animalIndex].body[cellNeighbour].grown = false;
-
-						animals[animalIndex].body[cellNeighbour] = animals[animalIndex].body[     animals[animalIndex].body[cellLocalPositionI].origin      ];
-						// animals[animalIndex].body[cellNeighbour].geneCursor = 
-						animals[animalIndex].body[cellNeighbour].sequenceNumber = sequenceNumber - 1;
+						animals[animalIndex].body[cellNeighbour] = animals[animalIndex].body[    origin    ]; // copy the origin cell to the neighbour and begin the sequence again.
+						animals[animalIndex].body[cellNeighbour].origin  = origin ;// except, the new cell's origin is still set to this sequence's origin, not the origin's origin.
 						animals[animalIndex].body[cellNeighbour].grown = false;
 					}
 				}
 			}
-
-
-
-
-
-
 		}
-	
-		// printf("animals[animalIndex].body[cellLocalPositionI].sequenceNumber  %u \n ",animals[animalIndex].body[cellLocalPositionI].sequenceNumber );
 		return;
 	}
 
@@ -508,9 +463,8 @@ void grow( int animalIndex, unsigned int cellLocalPositionI)
 		// whenever a break is encountered at a sequence number higher than 0, the new growing cell's properties are copied from the origin, and the sequence number is decremented.
 		animals[animalIndex].body[cellLocalPositionI].geneCursor ++;
 		if (animals[animalIndex].body[cellLocalPositionI].geneCursor >= genomeSize) { animals[animalIndex].body[cellLocalPositionI].grown = true; return; }
-		animals[animalIndex].body[cellLocalPositionI].sequenceNumber  = animals[animalIndex].genes[ animals[animalIndex].body[cellLocalPositionI].geneCursor ] - 'A';
-		// printf("animals[animalIndex].body[cellLocalPositionI].sequenceNumber  %u \n ",animals[animalIndex].body[cellLocalPositionI].sequenceNumber );
 
+		animals[animalIndex].body[cellLocalPositionI].sequenceNumber  = animals[animalIndex].genes[ animals[animalIndex].body[cellLocalPositionI].geneCursor ] - 'A';
 
 
 		for (unsigned int n = 0; n < nNeighbours; ++n)
@@ -520,24 +474,19 @@ void grow( int animalIndex, unsigned int cellLocalPositionI)
 				unsigned int cellNeighbour = cellLocalPositionI + cellNeighbourOffsets[n];
 				if (cellNeighbour < animalSquareSize)
 				{
-					animals[animalIndex].body[cellNeighbour].sequenceNumber = animals[animalIndex].body[cellLocalPositionI].sequenceNumber;
-					animals[animalIndex].body[cellNeighbour].origin     = cellNeighbour;
+					animals[animalIndex].body[cellNeighbour].origin     = cellLocalPositionI;
 					animals[animalIndex].body[cellNeighbour].geneCursor = animals[animalIndex].body[cellLocalPositionI].geneCursor ; // the neighbour will choose a gene at genecursor+1 anyway
 					animals[animalIndex].body[cellNeighbour].growDirection = (1U << n);
-					animals[animalIndex].body[cellNeighbour].growthMask = 0x00;//animals[animalIndex].body[cellLocalPositionI].growthMask;
+					animals[animalIndex].body[cellNeighbour].growthMask = 0x00;
 					animals[animalIndex].body[cellNeighbour].grown = false;
 				}
 			}
 		}
 		animals[animalIndex].body[cellLocalPositionI].grown = true;
-		animals[animalIndex].body[cellLocalPositionI].growthMask = 0x00;
-
 		return;
 	}
-
-	else if (gene == 0x00 || gene == MATERIAL_NOTHING) // terminate the sequence completely.
+	else if (gene == 0x00 || gene == MATERIAL_NOTHING) // terminate the sequence completely.// certain characters mark the end of the entire sequence.
 	{
-		// certain characters mark the end of the entire sequence.
 		animals[animalIndex].body[cellLocalPositionI].geneCursor = genomeSize;
 		animals[animalIndex].body[cellLocalPositionI].grown = true; return;
 	}
@@ -565,7 +514,6 @@ void grow( int animalIndex, unsigned int cellLocalPositionI)
 					unsigned int cellNeighbour = cellLocalPositionI + cellNeighbourOffsets[n];
 					if (cellNeighbour < animalSquareSize)
 					{
-						animals[animalIndex].body[cellNeighbour].sequenceNumber     = animals[animalIndex].body[cellLocalPositionI].sequenceNumber;
 						animals[animalIndex].body[cellNeighbour].origin     = animals[animalIndex].body[cellLocalPositionI].origin;
 						animals[animalIndex].body[cellNeighbour].geneCursor = animals[animalIndex].body[cellLocalPositionI].geneCursor - 1; // the neighbour will choose a gene at genecursor+1 anyway, so its like it gets the same gene as you just had.
 						animals[animalIndex].body[cellNeighbour].growDirection = (1U << n);
