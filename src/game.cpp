@@ -83,9 +83,9 @@ const unsigned int viewFieldSize = viewFieldX * viewFieldY;
 
 const int animalSize     = 32;
 const unsigned int animalSquareSize      = animalSize * animalSize;
-const int worldSize      = 512;
+const int worldSize      = 256;
 const unsigned int worldSquareSize       = worldSize * worldSize;
-const unsigned int genomeSize      = 64;
+const unsigned int genomeSize      = 32;
 const unsigned int numberOfAnimals = 10000;
 const unsigned int numberOfAnimalsToSpawn = 100;
 const unsigned int nNeighbours     = 8;
@@ -93,7 +93,7 @@ const unsigned int numberOfCharacters = 31;
 
 const float growthEnergyScale      = 1.0f;        // a multiplier for how much it costs animals to make new cells.
 const float taxEnergyScale         = 0.01f;        // a multiplier for how much it costs animals just to exist.
-const float lightEnergy            = 0.2f;   // how much energy an animal gains each turn from having a leaf
+const float lightEnergy            = 0.011f;   // how much energy an animal gains each turn from having a leaf
 const float movementEnergyScale    = 1.0f;        // a multiplier for how much it costs animals to move.
 const float foodEnergy             = 0.95f;                     // how much you get from eating a piece of meat
 const float liverStorage = 10.0f;
@@ -103,21 +103,21 @@ const unsigned int baseSensorRange = 10;
 const int sensorFidelity = 1;
 
 const bool brownianMotion        = false;
-const bool immortality           = true;
-const bool doReproduction        = false;
-const bool doMuscles             = false;
-const bool doPhotosynth          = false;
-const bool growingCostsEnergy    = false;
+const bool immortality           = false;
+const bool doReproduction        = true;
+const bool doMuscles             = true;
+const bool doPhotosynth          = true;
+const bool growingCostsEnergy    = true;
 const bool lockfps               = false;
-const bool cameraFollowsChampion = false;
-const bool tournament            = false;
-const bool taxIsByMass           = false;
+const bool cameraFollowsChampion = true;
+const bool tournament            = true;
+const bool taxIsByMass           = true;
 
 float energyScaleIn             = 1.0f;     // a multiplier for how much energy is gained from food and light.
 float minimumEntropy = 0.1f;
 float energyScaleOut           = minimumEntropy;
 
-unsigned int worldToLoad = WORLD_EXAMPLECREATURE;
+unsigned int worldToLoad = WORLD_RANDOM;
 
 int neighbourOffsets[] =
 {
@@ -413,9 +413,9 @@ void grow( int animalIndex, unsigned int cellLocalPositionI)
 	else if (gene == GROW_END)
 	{
 
-			unsigned int origin =   animals[animalIndex].body[cellLocalPositionI].origin  ;
-		 int sequenceNumber = 	animals[animalIndex].body[   origin    ].sequenceNumber;
-		
+		unsigned int origin =   animals[animalIndex].body[cellLocalPositionI].origin  ;
+		int sequenceNumber = 	animals[animalIndex].body[   origin    ].sequenceNumber;
+
 
 		if (sequenceNumber == 0)
 		{
@@ -916,7 +916,7 @@ void animalTurn( int animalIndex)
 			animals[animalIndex].position = newPosition;
 		}
 	}
-	unsigned int totalLiver = 0;
+	float totalLiver = 0;
 	for (unsigned int cellLocalPositionI = 0; cellLocalPositionI < animalSquareSize; ++cellLocalPositionI)                                      // place animalIndex on grid and attack / eat. add captured energy
 	{
 		unsigned int cellLocalPositionX = cellLocalPositionI % animalSize;
@@ -947,7 +947,7 @@ void animalTurn( int animalIndex)
 			}
 			if ((animals[animalIndex].body[cellLocalPositionI].organ & ORGAN_LIVER) == ORGAN_LIVER )
 			{
-				totalLiver++;
+				totalLiver += 1.0f;
 				animals[animalIndex].energy -= taxEnergyScale * energyScaleOut * organUpkeepCost(ORGAN_LIVER);
 			}
 			if ((animals[animalIndex].body[cellLocalPositionI].organ & ORGAN_WEAPON) == ORGAN_WEAPON )
@@ -1050,7 +1050,13 @@ void animalTurn( int animalIndex)
 							{
 								animals[world[cellWorldPositionI].identity].body[targetLocalPositionI].organ = MATERIAL_NOTHING;
 								animals[world[cellWorldPositionI].identity].body[targetLocalPositionI].signalIntensity = 0.0f;
-								animals[world[cellWorldPositionI].identity].mass--;
+
+								if (animals[world[cellWorldPositionI].identity].mass >= 1)
+								{
+									animals[world[cellWorldPositionI].identity].mass--;
+
+								}
+
 								animals[world[cellWorldPositionI].identity].damageReceived++;
 								okToStep = true;
 								animals[animalIndex].damageDone++;
@@ -1081,6 +1087,12 @@ void animalTurn( int animalIndex)
 		        animals[animalIndex].damageReceived > animals[animalIndex].mass)
 		{
 			killAnimal( animalIndex);
+			return;
+		}
+
+		if (animals[animalIndex].mass <= 0)
+		{
+			killAnimal(animalIndex);
 			return;
 		}
 	}
@@ -1309,8 +1321,17 @@ void setupTournamentAnimals()
 		int newAnimal = spawnAnimal( exampleAnimal, targetWorldPositionI, true);
 		if (newAnimal >= 0)
 		{
+
 			animals[newAnimal].energy = 8.0f;
-			for (int j = 0; j < genomeSize; ++j)
+
+			for (int i = 0; i < genomeSize; ++i)
+			{
+				animals[newAnimal].genes[i] = geneCodeToChar( MATERIAL_NOTHING);
+			}
+
+
+
+			for (int j = 0; j < genomeSize / 4; ++j)
 			{
 				animals[newAnimal].genes[j] = randomLetter();
 			}
