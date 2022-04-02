@@ -12,11 +12,14 @@
 #include <random>
 #include <time.h>
 
-#define TRACY_ENABLE // integrate Tracy profiler
 #include <Tracy.hpp>
+
+// #define TRACY_ENABLE // integrate Tracy profiler // do this in cmake instead?
 
 float RNG()
 {
+	
+	ZoneScoped;
 	static std::default_random_engine e;
 	e.seed(std::chrono::system_clock::now().time_since_epoch().count());
 	static std::uniform_real_distribution<> dis(0, 1);
@@ -29,6 +32,8 @@ unsigned int rn_a = 0;
 
 inline unsigned int extremelyFastRandomNumber()
 {
+
+	ZoneScoped;
 	unsigned int t = rn_x ^ (rn_x << 8);
 	rn_x = rn_y;
 	rn_y = rn_z;
@@ -39,6 +44,8 @@ inline unsigned int extremelyFastRandomNumber()
 
 inline unsigned int extremelyFastNumberFromZeroTo( unsigned int to)
 {
+
+	ZoneScoped;
 	return ( extremelyFastRandomNumber() % ( to + 1 ) );
 }
 
@@ -212,6 +219,8 @@ struct Animal
 
 float organGrowthCost(unsigned int organ)
 {
+
+	ZoneScoped;
 	float growthCost = 1.0f;
 	switch (organ)
 	{
@@ -248,6 +257,8 @@ float organGrowthCost(unsigned int organ)
 
 float organUpkeepCost(unsigned int organ)
 {
+
+	ZoneScoped;
 	float upkeepCost = 1.0f;
 	switch (organ)
 	{
@@ -290,6 +301,8 @@ Animal animals[numberOfAnimals];
 
 void resetAnimal(unsigned int animalIndex)
 {
+
+	ZoneScoped;
 	if (animalIndex >= 0)
 	{
 		for (unsigned int cellLocalPositionI = 0; cellLocalPositionI < animalSquareSize; ++cellLocalPositionI)
@@ -325,6 +338,8 @@ void resetAnimal(unsigned int animalIndex)
 
 void resetAnimals()
 {
+
+	ZoneScoped;
 	for ( int animalIndex = 0; animalIndex < numberOfAnimals; ++animalIndex)
 	{
 		resetAnimal(animalIndex);
@@ -333,6 +348,8 @@ void resetAnimals()
 
 void resetGrid()
 {
+
+	ZoneScoped;
 	for (int i = 0; i < worldSquareSize; ++i)
 	{
 		world[i].material = MATERIAL_NOTHING;
@@ -343,6 +360,8 @@ void resetGrid()
 
 char geneCodeToChar( unsigned int gene )
 {
+
+	ZoneScoped;
 	for (unsigned int n = 0; n < 32; ++n)
 	{
 		if ( ( gene & (1U << n)) == (1U << n) )
@@ -355,6 +374,8 @@ char geneCodeToChar( unsigned int gene )
 
 void examplePlant (unsigned int animalIndex)
 {
+
+	ZoneScoped;
 	for (int i = 0; i < genomeSize; ++i)
 	{
 		animals[animalIndex].genes[i] = geneCodeToChar( MATERIAL_NOTHING);
@@ -371,6 +392,8 @@ void examplePlant (unsigned int animalIndex)
 
 void setupExampleAnimal(unsigned int animalIndex)
 {
+
+	ZoneScoped;
 	for (int i = 0; i < genomeSize; ++i)
 	{
 		animals[animalIndex].genes[i] = geneCodeToChar( MATERIAL_NOTHING);
@@ -408,6 +431,8 @@ void setupExampleAnimal(unsigned int animalIndex)
 
 void grow( int animalIndex, unsigned int cellLocalPositionI)
 {
+
+	ZoneScoped;
 	animals[animalIndex].body[cellLocalPositionI].geneCursor ++;
 	if (animals[animalIndex].body[cellLocalPositionI].geneCursor >= genomeSize) { animals[animalIndex].body[cellLocalPositionI].grown = true; return; }
 	char c = (animals[animalIndex].genes[ animals[animalIndex].body[cellLocalPositionI].geneCursor ]) - 'A' ;
@@ -554,6 +579,8 @@ void grow( int animalIndex, unsigned int cellLocalPositionI)
 
 int getNewIdentity()
 {
+
+	ZoneScoped;
 	int animalIndex;
 	for ( animalIndex = 0; animalIndex < numberOfAnimals; ++animalIndex)
 	{
@@ -567,17 +594,23 @@ int getNewIdentity()
 
 char randomLetter()
 {
+
+	ZoneScoped;
 	return (char)('A' + extremelyFastNumberFromZeroTo(31));
 }
 
 void mutateGenes( int animalIndex)
 {
+
+	ZoneScoped;
 	unsigned int geneIndex = extremelyFastNumberFromZeroTo(genomeSize - 1);
 	animals[animalIndex].genes[geneIndex] = randomLetter();
 }
 
 void spawnAnimalIntoSlot( unsigned int animalIndex,  char * genes, unsigned int position, bool mutation)
 {
+
+	ZoneScoped;
 	resetAnimal(animalIndex);
 	animals[animalIndex].retired = false;
 	unsigned int cellLocalPositionX = animalSize / 2; // place a seed in the middle of the sprite
@@ -604,6 +637,8 @@ void spawnAnimalIntoSlot( unsigned int animalIndex,  char * genes, unsigned int 
 
 int spawnAnimal( char * genes, unsigned int position, bool mutation)
 {
+
+	ZoneScoped;
 	int animalIndex = getNewIdentity();
 	if (animalIndex >= 0) // an animalIndex was available
 	{
@@ -614,6 +649,8 @@ int spawnAnimal( char * genes, unsigned int position, bool mutation)
 
 void killAnimal(int animalIndex)
 {
+
+	ZoneScoped;
 	animals[animalIndex].retired = true;
 	unsigned int animalWorldPositionX    = animals[animalIndex].position % worldSize;
 	unsigned int animalWorldPositionY    = animals[animalIndex].position / worldSize;
@@ -640,6 +677,8 @@ void killAnimal(int animalIndex)
 // rotates an animal sprite, so it's like the animal is facing another direction!
 void turnAnimal(unsigned int animalIndex, unsigned int direction)
 {
+
+	ZoneScoped;
 	Animal tempAnimal = Animal();
 	for (int cellLocalPositionI = 0; cellLocalPositionI < animalSquareSize; ++cellLocalPositionI)  // you cannot add stuff back into the animal while you are working on it, so create a copy to hold your updates.
 	{
@@ -665,6 +704,8 @@ void turnAnimal(unsigned int animalIndex, unsigned int direction)
 
 int igetRelativeDistance(unsigned int a, unsigned int b)
 {
+
+	ZoneScoped;
 	int ia = a;
 	int ib = b;
 	int aX =  ia % worldSize;
@@ -680,6 +721,8 @@ int igetRelativeDistance(unsigned int a, unsigned int b)
 // find the angle in radians between two world positions
 float getRelativeDirection (unsigned int a, unsigned int b)
 {
+
+	ZoneScoped;
 	int ia = a;
 	int ib = b;
 	int aX =  ia % worldSize;
@@ -696,6 +739,8 @@ float getRelativeDirection (unsigned int a, unsigned int b)
 
 void sensor(int animalIndex, unsigned int cellWorldPositionX, unsigned int cellWorldPositionY, unsigned int cellWorldPositionI, unsigned int cellLocalPositionX, unsigned int cellLocalPositionY, unsigned int cellLocalPositionI, unsigned int organ)
 {
+
+	ZoneScoped;
 	if (organ == ORGAN_SENSOR_RANDOM)   // random sensors just random-walk the creature.
 	{
 		if (extremelyFastNumberFromZeroTo(animals[animalIndex].stride) == 0)
@@ -857,6 +902,8 @@ void sensor(int animalIndex, unsigned int cellWorldPositionX, unsigned int cellW
 // check if an animal is currently occupying a square. return the local index of the occupying cell, otherwise, return -1 if not occupied.
 int isAnimalInSquare(unsigned int animalIndex, unsigned int cellWorldPositionX,  unsigned int cellWorldPositionY,  unsigned int cellWorldPositionI)
 {
+
+	ZoneScoped;
 	if (world[cellWorldPositionI].identity >= 0 )
 	{
 		if (!animals[animalIndex].retired)
@@ -884,6 +931,8 @@ int isAnimalInSquare(unsigned int animalIndex, unsigned int cellWorldPositionX, 
 
 int defenseAtPoint(unsigned int animalIndex, unsigned int cellLocalPositionI)
 {
+
+	ZoneScoped;
 	int nBones = 0;
 	for (unsigned int n = 0; n < nNeighbours; ++n)
 	{
@@ -901,6 +950,8 @@ int defenseAtPoint(unsigned int animalIndex, unsigned int cellLocalPositionI)
 
 void animalTurn( int animalIndex)
 {
+
+	ZoneScoped;
 	unsigned int animalWorldPositionX    = animals[animalIndex].position % worldSize;
 	unsigned int animalWorldPositionY    = animals[animalIndex].position / worldSize;
 	if (animals[animalIndex].energyDebt > 0.0f)
@@ -1138,6 +1189,8 @@ void animalTurn( int animalIndex)
 
 void camera()
 {
+
+	ZoneScoped;
 	for ( int vy = viewFieldY - 1; vy >= 0; --vy) // correct for Y axis inversion
 	{
 		for ( int vx = 0; vx < viewFieldX; ++vx)
@@ -1301,6 +1354,8 @@ void camera()
 
 void populationController()
 {
+
+	ZoneScoped;
 	if (populationCount > (numberOfAnimals / 2))
 	{
 		float populationDifference = populationCount - (numberOfAnimals / 2);
@@ -1320,6 +1375,8 @@ void populationController()
 
 void regenerateKnights()
 {
+
+	ZoneScoped;
 	for (unsigned int i = 0; i < numberOfKnights; ++i)	// initial random creatures.
 	{
 		unsigned int targetWorldPositionX = extremelyFastNumberFromZeroTo(worldSize - 1);
@@ -1338,6 +1395,8 @@ void regenerateKnights()
 
 void setupTournamentAnimals()
 {
+
+	ZoneScoped;
 	for (unsigned int i = 0; i < (numberOfAnimals / 2); ++i)	// initial random creatures.
 	{
 		unsigned int targetWorldPositionX = extremelyFastNumberFromZeroTo(worldSize - 1);
@@ -1362,6 +1421,8 @@ void setupTournamentAnimals()
 
 void setupRandomWorld()
 {
+
+	ZoneScoped;
 	resetAnimals();
 	resetGrid();
 
@@ -1508,6 +1569,8 @@ void setupRandomWorld()
 
 void model()
 {
+
+	ZoneScoped;
 	auto start = std::chrono::steady_clock::now();
 	unsigned int newPopulationCount = 0;
 	for (int animalIndex = 0; animalIndex < numberOfAnimals; ++animalIndex)
@@ -1554,18 +1617,19 @@ void interfaceSupervisor()
 
 void modelSupervisor()
 {
-
 	while (true)
 	{
 		if (!lockfps)
 		{
 			model();
 		}
+		FrameMark;
 	}
 }
 
 int main()
 {
+	ZoneScoped;
 	setupRandomWorld();
 	boost::thread t7{ interfaceSupervisor };
 	modelSupervisor();
