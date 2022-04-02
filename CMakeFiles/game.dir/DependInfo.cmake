@@ -5,6 +5,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
   "/home/marlo/Documents/untitled_marlo_project/src/game.cpp" "/home/marlo/Documents/untitled_marlo_project/CMakeFiles/game.dir/src/game.cpp.o"
+  "/home/marlo/Documents/untitled_marlo_project/tracy/TracyClient.cpp" "/home/marlo/Documents/untitled_marlo_project/CMakeFiles/game.dir/tracy/TracyClient.cpp.o"
   )
 set(CMAKE_CXX_COMPILER_ID "GNU")
 
@@ -19,6 +20,7 @@ set(CMAKE_TARGET_DEFINITIONS_CXX
 # The include file search paths:
 set(CMAKE_CXX_TARGET_INCLUDE_PATH
   "/usr/local/include/SDL2"
+  "tracy"
   )
 
 # Targets to which this target links.

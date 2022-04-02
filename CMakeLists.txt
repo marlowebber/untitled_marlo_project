@@ -16,6 +16,8 @@ find_package(Boost REQUIRED COMPONENTS filesystem thread)
 
 # Define the framework files.
 set(SRCS
+	tracy/Tracy.hpp
+	tracy/TracyClient.cpp
 	src/game.cpp
 )
 
@@ -26,6 +28,7 @@ link_directories(
 include_directories (
 	${SDL2_INCLUDE_DIRS}
 	${Boost_INCLUDE_DIRS}
+	"tracy"
 )
 
 add_executable(game ${SRCS} )
@@ -36,6 +39,7 @@ target_link_libraries (
 	${SDL2_LIBRARIES}
 	${OPENGL_LIBRARIES}
 	${Boost_LIBRARIES}
+	${OPENSSL_LIBRARIES} dl
 )
 
 

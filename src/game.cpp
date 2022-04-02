@@ -12,6 +12,9 @@
 #include <random>
 #include <time.h>
 
+#define TRACY_ENABLE // integrate Tracy profiler
+#include <Tracy.hpp>
+
 float RNG()
 {
 	static std::default_random_engine e;
@@ -102,7 +105,7 @@ const float musclePower = 0.1f; // the power of one muscle cell
 const unsigned int baseSensorRange = 10;
 const int sensorFidelity = 1;
 
-const bool brownianMotion        = false;
+const bool brownianMotion        = true;
 const bool immortality           = false;
 const bool doReproduction        = true;
 const bool doMuscles             = true;
@@ -350,6 +353,22 @@ char geneCodeToChar( unsigned int gene )
 	return (char)('A' + 27); // MATERIAL_NOTHING
 }
 
+void examplePlant (unsigned int animalIndex)
+{
+	for (int i = 0; i < genomeSize; ++i)
+	{
+		animals[animalIndex].genes[i] = geneCodeToChar( MATERIAL_NOTHING);
+	}
+	animals[animalIndex].genes[1]  = geneCodeToChar(DIRECTION_L ) ;
+	animals[animalIndex].genes[2]  = geneCodeToChar(GROW_BRANCH ) ;
+	animals[animalIndex].genes[3]  = geneCodeToChar(ORGAN_GONAD ) ;
+	animals[animalIndex].genes[4]  = geneCodeToChar(ORGAN_GONAD ) ;
+	animals[animalIndex].genes[5]  = geneCodeToChar(GROW_END ) ;
+
+	animals[animalIndex].energy = 8.0f;
+
+}
+
 void setupExampleAnimal(unsigned int animalIndex)
 {
 	for (int i = 0; i < genomeSize; ++i)
@@ -358,26 +377,32 @@ void setupExampleAnimal(unsigned int animalIndex)
 	}
 	animals[animalIndex].genes[1]  = geneCodeToChar(DIRECTION_L ) ;
 	animals[animalIndex].genes[2]  = geneCodeToChar(GROW_BRANCH ) ;
-	animals[animalIndex].genes[3]  = geneCodeToChar(ORGAN_BONE ) ;
-	animals[animalIndex].genes[4]  = geneCodeToChar(DIRECTION_D ) ;
-	animals[animalIndex].genes[5]  = geneCodeToChar(GROW_SEQUENCE ) ;
-	animals[animalIndex].genes[6]  = 'A' + 5;
-	animals[animalIndex].genes[7]  = geneCodeToChar(ORGAN_SENSOR_LIGHT )  ;
-	animals[animalIndex].genes[8]  = geneCodeToChar(ORGAN_SENSOR_LIGHT )  ;
-	animals[animalIndex].genes[9]  = geneCodeToChar(ORGAN_SENSOR_LIGHT )  ;
-	animals[animalIndex].genes[10]  = geneCodeToChar(GROW_END )  ;
-	animals[animalIndex].genes[11]  = geneCodeToChar(ORGAN_GONAD ) ;
-	animals[animalIndex].genes[12]  = geneCodeToChar(ORGAN_GONAD ) ;
-	animals[animalIndex].genes[13]  = geneCodeToChar(ORGAN_GONAD ) ;
-	animals[animalIndex].genes[14]  = geneCodeToChar(GROW_SEQUENCE ) ;
-	animals[animalIndex].genes[15]  = 'A' + 5;
-	animals[animalIndex].genes[16]  = geneCodeToChar(ORGAN_SENSOR_LIGHT )  ;
-	animals[animalIndex].genes[17]  = geneCodeToChar(ORGAN_SENSOR_LIGHT )  ;
-	animals[animalIndex].genes[18]  = geneCodeToChar(ORGAN_SENSOR_LIGHT )  ;
-	animals[animalIndex].genes[19]  = geneCodeToChar(GROW_END )  ;
-	animals[animalIndex].genes[20]  = geneCodeToChar(ORGAN_GONAD ) ;
-	animals[animalIndex].genes[21]  = geneCodeToChar(ORGAN_GONAD ) ;
-	animals[animalIndex].genes[22]  = geneCodeToChar(ORGAN_GONAD ) ;
+	animals[animalIndex].genes[3]  = geneCodeToChar(ORGAN_SENSOR_RANDOM ) ;
+	animals[animalIndex].genes[4]  = geneCodeToChar(ORGAN_MUSCLE ) ;
+	animals[animalIndex].genes[5]  = geneCodeToChar(ORGAN_GONAD ) ;
+	animals[animalIndex].genes[6]  = geneCodeToChar(ORGAN_GONAD ) ;
+	animals[animalIndex].genes[7]  = geneCodeToChar(ORGAN_MOUTH ) ;
+	animals[animalIndex].genes[8]  = geneCodeToChar(GROW_END ) ;
+	// animals[animalIndex].genes[3]  = geneCodeToChar(ORGAN_BONE ) ;
+	// animals[animalIndex].genes[4]  = geneCodeToChar(DIRECTION_D ) ;
+	// animals[animalIndex].genes[5]  = geneCodeToChar(GROW_SEQUENCE ) ;
+	// animals[animalIndex].genes[6]  = 'A' + 5;
+	// animals[animalIndex].genes[7]  = geneCodeToChar(ORGAN_SENSOR_LIGHT )  ;
+	// animals[animalIndex].genes[8]  = geneCodeToChar(ORGAN_SENSOR_LIGHT )  ;
+	// animals[animalIndex].genes[9]  = geneCodeToChar(ORGAN_SENSOR_LIGHT )  ;
+	// animals[animalIndex].genes[10]  = geneCodeToChar(GROW_END )  ;
+	// animals[animalIndex].genes[11]  = geneCodeToChar(ORGAN_GONAD ) ;
+	// animals[animalIndex].genes[12]  = geneCodeToChar(ORGAN_GONAD ) ;
+	// animals[animalIndex].genes[13]  = geneCodeToChar(ORGAN_GONAD ) ;
+	// animals[animalIndex].genes[14]  = geneCodeToChar(GROW_SEQUENCE ) ;
+	// animals[animalIndex].genes[15]  = 'A' + 5;
+	// animals[animalIndex].genes[16]  = geneCodeToChar(ORGAN_SENSOR_LIGHT )  ;
+	// animals[animalIndex].genes[17]  = geneCodeToChar(ORGAN_SENSOR_LIGHT )  ;
+	// animals[animalIndex].genes[18]  = geneCodeToChar(ORGAN_SENSOR_LIGHT )  ;
+	// animals[animalIndex].genes[19]  = geneCodeToChar(GROW_END )  ;
+	// animals[animalIndex].genes[20]  = geneCodeToChar(ORGAN_GONAD ) ;
+	// animals[animalIndex].genes[21]  = geneCodeToChar(ORGAN_GONAD ) ;
+	// animals[animalIndex].genes[22]  = geneCodeToChar(ORGAN_GONAD ) ;
 	animals[animalIndex].energy = 8.0f;
 }
 
@@ -1284,7 +1309,7 @@ void populationController()
 			energyScaleOut = (populationDifference) / numberOfAnimals;
 		}
 		energyScaleOut += 1.0f;
-		energyScaleOut = energyScaleOut * energyScaleOut  ;
+		energyScaleOut = energyScaleOut * energyScaleOut  * energyScaleOut ;
 		energyScaleOut -= 1.0f;
 	}
 	else
@@ -1322,18 +1347,14 @@ void setupTournamentAnimals()
 		if (newAnimal >= 0)
 		{
 
-			animals[newAnimal].energy = 8.0f;
-
-			for (int i = 0; i < genomeSize; ++i)
+			// animals[new?Z
+			if (extremelyFastNumberFromZeroTo(1)==0)
 			{
-				animals[newAnimal].genes[i] = geneCodeToChar( MATERIAL_NOTHING);
+				setupExampleAnimal(newAnimal);
 			}
-
-
-
-			for (int j = 0; j < genomeSize / 4; ++j)
+			else
 			{
-				animals[newAnimal].genes[j] = randomLetter();
+				examplePlant(newAnimal);
 			}
 		}
 	}
@@ -1533,6 +1554,7 @@ void interfaceSupervisor()
 
 void modelSupervisor()
 {
+
 	while (true)
 	{
 		if (!lockfps)
