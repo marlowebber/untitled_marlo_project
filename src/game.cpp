@@ -88,7 +88,7 @@ const bool doReproduction        = true;
 const bool doMuscles             = true;
 const bool doPhotosynth          = true;
 const bool growingCostsEnergy    = true;
-const bool lockfps               = false;
+const bool lockfps               = true;
 const bool tournament            = true;
 const bool taxIsByMass           = true;
 
@@ -97,7 +97,7 @@ const bool taxIsByMass           = true;
 const bool cameraFollowsChampion = true;
 // const bool cameraShowsSignal= false;
 
-unsigned int worldToLoad = WORLD_RANDOM;
+unsigned int worldToLoad = WORLD_EXAMPLECREATURE;
 
 
 
@@ -595,23 +595,22 @@ void grow( int animalIndex, unsigned int cellLocalPositionI)
 		{
 			animals[animalIndex].body[cellLocalPositionI].organ = gene;
 
+			animals[animalIndex].mass++;
+			animals[animalIndex].energyDebt += organGrowthCost(gene);
 
 
-
-
-
-			if ( gene == ORGAN_SENSOR_FOOD ||
-			        gene == ORGAN_SENSOR_LIGHT ||
-			        gene == ORGAN_SENSOR_CREATURE ||
-			        gene == ORGAN_SENSOR_RANDOM ||
-			        gene == ORGAN_SENSOR_INVERT ||
-			        gene == ORGAN_SENSOR_HOME ||
-			        gene == ORGAN_SENSOR_PARENT	)
+			    // if the organ is a sensor and there are similar sensors nearby, they work together to increase the range
+			    if ( gene == ORGAN_SENSOR_FOOD ||
+			         gene == ORGAN_SENSOR_LIGHT ||
+			         gene == ORGAN_SENSOR_CREATURE ||
+			         gene == ORGAN_SENSOR_RANDOM ||
+			         gene == ORGAN_SENSOR_INVERT ||
+			         gene == ORGAN_SENSOR_HOME ||
+			         gene == ORGAN_SENSOR_PARENT	)
 			{
 				animals[animalIndex].body[cellLocalPositionI].sensorRange = baseSensorRange;
 				for (unsigned int n = 0; n < nNeighbours; ++n)
 				{
-
 					unsigned int cellNeighbour = cellLocalPositionI + cellNeighbourOffsets[n];
 					if (cellNeighbour < animalSquareSize)
 					{
@@ -1214,6 +1213,7 @@ void organs_all()
 										animals[animalIndex].energy -= animals[animalIndex].offspringEnergy;
 										animals[result].energy       =  animals[animalIndex].offspringEnergy;
 										animals[result].parentIdentity       = animalIndex;
+										world[cellWorldPositionI].identity = result;
 									}
 								}
 							}
@@ -1238,7 +1238,7 @@ void organs_all()
 							unsigned int cellWorldPositionI = (cellWorldPositionY * worldSize) + cellWorldPositionX;
 							if (world[cellWorldPositionI].identity == animalIndex)
 							{
-								animals[animalIndex].energy += world[cellWorldPositionI].light * energyScaleIn;
+								animals[animalIndex].energy += world[cellWorldPositionI].light * lightEnergy * energyScaleIn;
 							}
 						}
 						break;
@@ -1753,8 +1753,8 @@ void setupRandomWorld()
 
 
 
-			setupExampleAnimal(animalIndex);
-
+			// setupExampleAnimal(animalIndex);
+			examplePlant(animalIndex);
 		}
 
 		unsigned int foodpos = targetWorldPositionI + (10 * worldSize) + 10;
