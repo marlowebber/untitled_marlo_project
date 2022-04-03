@@ -77,9 +77,32 @@ inline unsigned int extremelyFastNumberFromZeroTo( unsigned int to)
 #define MATERIAL_WATER            30 //           
 #define MARKER                    31 //      // numbers above 25 don't correspond to lower-case letters(0..25) so we don't use them in the gene code. But (26..31) are still compatible with our masking scheme.
 
-#define WORLD_RANDOM 2
-#define WORLD_ARENA 3
-#define WORLD_EXAMPLECREATURE 4
+#define WORLD_RANDOM 1
+#define WORLD_EXAMPLECREATURE 2
+
+
+
+const bool brownianMotion        = false;
+const bool immortality           = false;
+const bool doReproduction        = true;
+const bool doMuscles             = true;
+const bool doPhotosynth          = true;
+const bool growingCostsEnergy    = true;
+const bool lockfps               = false;
+const bool tournament            = true;
+const bool taxIsByMass           = true;
+
+
+
+const bool cameraFollowsChampion = true;
+// const bool cameraShowsSignal= false;
+
+unsigned int worldToLoad = WORLD_RANDOM;
+
+
+
+
+
 
 const unsigned int viewFieldX = 203; // 80 columns, 24 rows is the default size of a terminal window
 const unsigned int viewFieldY = 55 - 3;  // 203 columns, 55 rows is the max size i can make one on my pc.
@@ -96,10 +119,10 @@ const unsigned int nNeighbours     = 8;
 const unsigned int numberOfCharacters = 31;
 
 const float growthEnergyScale      = 1.0f;        // a multiplier for how much it costs animals to make new cells.
-const float taxEnergyScale         = 0.01f;        // a multiplier for how much it costs animals just to exist.
-const float lightEnergy            = 0.011f;   // how much energy an animal gains each turn from having a leaf
+const float taxEnergyScale         = 0.1f;        // a multiplier for how much it costs animals just to exist.
+const float lightEnergy            = 0.0f;//.0100001f;   // how much energy an animal gains each turn from having a leaf. if tax is by mass, must be higher than taxEnergyScale to be worth having leaves at all.
 const float movementEnergyScale    = 1.0f;        // a multiplier for how much it costs animals to move.
-const float foodEnergy             = 0.95f;                     // how much you get from eating a piece of meat
+const float foodEnergy             = 0.5f;                     // how much you get from eating a piece of meat. should be less than 1 to avoid meat tornado
 const float liverStorage = 10.0f;
 const float musclePower = 0.1f; // the power of one muscle cell
 
@@ -108,22 +131,13 @@ const int excitationRange = 2;
 const unsigned int baseSensorRange = 10;
 const int sensorFidelity = 1;
 
-const bool brownianMotion        = false;
-const bool immortality           = true;
-const bool doReproduction        = false;
-const bool doMuscles             = false;
-const bool doPhotosynth          = false;
-const bool growingCostsEnergy    = false;
-const bool lockfps               = true;
-const bool cameraFollowsChampion = true;
-const bool tournament            = true;
-const bool taxIsByMass           = true;
+
+
 
 float energyScaleIn             = 1.0f;     // a multiplier for how much energy is gained from food and light.
 float minimumEntropy = 0.1f;
 float energyScaleOut           = minimumEntropy;
 
-unsigned int worldToLoad = WORLD_EXAMPLECREATURE;
 
 int neighbourOffsets[] =
 {
@@ -182,10 +196,10 @@ struct Cell
 	unsigned int growDirection;
 	unsigned int growthMask;
 	unsigned int grown;
-	unsigned int signalLocation;
 	unsigned int origin;
 	unsigned int sequenceNumber;
-	float signalIntensity;
+	int sign;
+	int sensorRange;
 };
 
 struct Animal
@@ -211,41 +225,52 @@ struct Animal
 	float energy;
 	float maxEnergy;
 	float energyDebt;
+
+
+	// unsigned int signalLocation;
+	int destinationX;
+	int destinationY;
+
+	// float signalIntensity;
 };
 
 float organGrowthCost(unsigned int organ)
 {
 	ZoneScoped;
-	float growthCost = 1.0f;
-	switch (organ)
+	float growthCost = 0.0f;
+	if (growingCostsEnergy)
 	{
-	case ORGAN_LEAF:
-		growthCost *= 1.0f;
-		break;
-	case ORGAN_MUSCLE:
-		growthCost *= 1.0f;
-		break;
-	case ORGAN_BONE:
-		growthCost *= 1.0f;
-		break;
-	case ORGAN_WEAPON:
-		growthCost *= 2.0f;
-		break;
-	case ORGAN_SENSOR_FOOD:
-		growthCost *= 2.0f;
-		break;
-	case ORGAN_SENSOR_LIGHT:
-		growthCost *= 2.0f;
-		break;
-	case ORGAN_SENSOR_CREATURE:
-		growthCost *= 2.0f;
-		break;
-	case ORGAN_GONAD:
-		growthCost *= 5.0f;
-		break;
-	case ORGAN_MOUTH:
-		growthCost *= 5.0f;
-		break;
+		growthCost = 1.0f;
+		switch (organ)
+		{
+		case ORGAN_LEAF:
+			growthCost *= 1.0f;
+			break;
+		case ORGAN_MUSCLE:
+			growthCost *= 1.0f;
+			break;
+		case ORGAN_BONE:
+			growthCost *= 1.0f;
+			break;
+		case ORGAN_WEAPON:
+			growthCost *= 2.0f;
+			break;
+		case ORGAN_SENSOR_FOOD:
+			growthCost *= 2.0f;
+			break;
+		case ORGAN_SENSOR_LIGHT:
+			growthCost *= 2.0f;
+			break;
+		case ORGAN_SENSOR_CREATURE:
+			growthCost *= 2.0f;
+			break;
+		case ORGAN_GONAD:
+			growthCost *= 5.0f;
+			break;
+		case ORGAN_MOUTH:
+			growthCost *= 5.0f;
+			break;
+		}
 	}
 	return growthCost;
 }
@@ -275,7 +300,7 @@ float organUpkeepCost(unsigned int organ)
 		upkeepCost *= 1.0f;
 		break;
 	case ORGAN_LIVER:
-		upkeepCost *= 2.0f;
+		upkeepCost *= 1.0f;
 		break;
 	case ORGAN_SENSOR_FOOD:
 		upkeepCost *= 2.0f;
@@ -305,8 +330,6 @@ void resetAnimal(unsigned int animalIndex)
 			animals[animalIndex].body[cellLocalPositionI].growDirection = 0x00;
 			animals[animalIndex].body[cellLocalPositionI].grown = true;
 			animals[animalIndex].body[cellLocalPositionI].origin = 0;
-			animals[animalIndex].body[cellLocalPositionI].signalLocation = 0;
-			animals[animalIndex].body[cellLocalPositionI].signalIntensity = 0.0f;
 		}
 		memset( &(animals[animalIndex].genes[0]), 0x00, genomeSize );
 		animals[animalIndex].offspringEnergy = 1.0f;
@@ -326,6 +349,13 @@ void resetAnimal(unsigned int animalIndex)
 		animals[animalIndex].damageDone = 0;
 		animals[animalIndex].damageReceived = 0;
 		animals[animalIndex].birthLocation = 0;
+
+		// animals[animalIndex].signalLocation = 0;
+		animals[animalIndex].destinationX = 0;
+		animals[animalIndex].destinationY = 0;
+
+
+		// animals[animalIndex].signalIntensity = 0.0f;
 	}
 }
 
@@ -373,7 +403,7 @@ void examplePlant (unsigned int animalIndex)
 	animals[animalIndex].genes[3]  = geneCodeToChar(ORGAN_GONAD ) ;
 	animals[animalIndex].genes[4]  = geneCodeToChar(ORGAN_GONAD ) ;
 	animals[animalIndex].genes[5]  = geneCodeToChar(GROW_END ) ;
-	animals[animalIndex].energy = 8.0f;
+	// animals[animalIndex].energy = 8.0f;
 }
 
 void setupExampleAnimal(unsigned int animalIndex)
@@ -383,21 +413,68 @@ void setupExampleAnimal(unsigned int animalIndex)
 	{
 		animals[animalIndex].genes[i] = geneCodeToChar( MATERIAL_NOTHING);
 	}
-	// animals[animalIndex].genes[0]  = geneCodeToChar(DIRECTION_UL ) ;
-	// animals[animalIndex].genes[1]  = geneCodeToChar(DIRECTION_UL ) ;
-	// animals[animalIndex].genes[2]  = geneCodeToChar(DIRECTION_U ) ;
-	// animals[animalIndex].genes[3]  = geneCodeToChar(DIRECTION_UR ) ;
-	animals[animalIndex].genes[1]  = geneCodeToChar(DIRECTION_L ) ;
-	animals[animalIndex].genes[2]  = geneCodeToChar(DIRECTION_R ) ;
-	// animals[animalIndex].genes[6]  = geneCodeToChar(DIRECTION_DL ) ;
-	// animals[animalIndex].genes[7]  = geneCodeToChar(DIRECTION_D ) ;
-	// animals[animalIndex].genes[8]  = geneCodeToChar(DIRECTION_DR ) ;
-	animals[animalIndex].genes[3]  = geneCodeToChar(GROW_BRANCH ) ;
-	animals[animalIndex].genes[4]  = geneCodeToChar(ORGAN_BONE ) ;
-	animals[animalIndex].genes[5]  = geneCodeToChar(ORGAN_BONE ) ;
-	animals[animalIndex].genes[6]  = geneCodeToChar(ORGAN_BONE ) ;
-	animals[animalIndex].genes[7]  = geneCodeToChar(GROW_END ) ;
+
+
+	animals[animalIndex].genes[1]  = geneCodeToChar(DIRECTION_D ) ;
+	animals[animalIndex].genes[2]  = geneCodeToChar(GROW_BRANCH ) ;
+	animals[animalIndex].genes[3]  = geneCodeToChar(ORGAN_GONAD ) ;
+	animals[animalIndex].genes[4]  = geneCodeToChar(ORGAN_GONAD ) ;
+	animals[animalIndex].genes[5]  = geneCodeToChar(DIRECTION_DR ) ;
+	animals[animalIndex].genes[6]  = geneCodeToChar(GROW_BRANCH ) ;
+	animals[animalIndex].genes[7]  = geneCodeToChar(ORGAN_MUSCLE ) ;
+	animals[animalIndex].genes[8]  = geneCodeToChar(ORGAN_SENSOR_CREATURE ) ;
+	animals[animalIndex].genes[9]  = geneCodeToChar(ORGAN_MOUTH ) ;
+	animals[animalIndex].genes[10]  = geneCodeToChar(GROW_END ) ;
+	animals[animalIndex].genes[11]  = geneCodeToChar(DIRECTION_DL ) ;
+	animals[animalIndex].genes[12]  = geneCodeToChar(GROW_BRANCH ) ;
+	animals[animalIndex].genes[13]  = geneCodeToChar(ORGAN_MUSCLE ) ;
+	animals[animalIndex].genes[14]  = geneCodeToChar(ORGAN_SENSOR_FOOD ) ;
+	animals[animalIndex].genes[15]  = geneCodeToChar(ORGAN_MOUTH ) ;
+	animals[animalIndex].genes[16]  = geneCodeToChar(GROW_END ) ;
+	animals[animalIndex].genes[17]  = geneCodeToChar(GROW_END ) ;
+
+
+	// // animals[animalIndex].genes[0]  = geneCodeToChar(DIRECTION_UL ) ;
+	// // animals[animalIndex].genes[1]  = geneCodeToChar(DIRECTION_UL ) ;
+	// // animals[animalIndex].genes[2]  = geneCodeToChar(DIRECTION_U ) ;
+	// // animals[animalIndex].genes[3]  = geneCodeToChar(DIRECTION_UR ) ;
+	// animals[animalIndex].genes[1]  = geneCodeToChar(DIRECTION_L ) ;
+	// animals[animalIndex].genes[2]  = geneCodeToChar(DIRECTION_R ) ;
+	// // animals[animalIndex].genes[6]  = geneCodeToChar(DIRECTION_DL ) ;
+	// // animals[animalIndex].genes[7]  = geneCodeToChar(DIRECTION_D ) ;
+	// // animals[animalIndex].genes[8]  = geneCodeToChar(DIRECTION_DR ) ;
+	// animals[animalIndex].genes[3]  = geneCodeToChar(GROW_BRANCH ) ;
+	// animals[animalIndex].genes[4]  = geneCodeToChar(ORGAN_BONE ) ;
+	// animals[animalIndex].genes[5]  = geneCodeToChar(ORGAN_BONE ) ;
+	// animals[animalIndex].genes[6]  = geneCodeToChar(ORGAN_BONE ) ;
 }
+
+
+// #define INT_BITS 32
+// int leftRotate(int n, unsigned int d)
+// {
+// 	/*
+//     https://www.geeksforgeeks.org/rotate-bits-of-an-integer/
+// 	In n<<d, last d bits are 0. To
+// 	 put first 3 bits of n at
+// 	last, do bitwise or of n<<d
+// 	with n >>(INT_BITS - d) */
+// 	return (n << d) | (n >> (INT_BITS - d));
+// }
+
+// Function to right rotate n by d bits
+// int rightRotate(int n, unsigned int d)
+// {
+// 	/*
+// 	https://www.geeksforgeeks.org/rotate-bits-of-an-integer/
+// 	In n>>d, first d bits are 0.
+// 	To put last 3 bits of at
+// 	first, do bitwise or of n>>d
+// 	with n <<(INT_BITS - d) */
+// 	return (n >> d) | (n << (INT_BITS - d));
+// }
+
+
 
 void grow( int animalIndex, unsigned int cellLocalPositionI)
 {
@@ -407,17 +484,20 @@ void grow( int animalIndex, unsigned int cellLocalPositionI)
 	unsigned int gene =  charToGeneCode( (animals[animalIndex].genes[ animals[animalIndex].body[cellLocalPositionI].geneCursor ]) );
 	if (gene == GROW_BRANCH)
 	{
+
+
 		for (unsigned int n = 0; n < nNeighbours; ++n)
 		{
 			if ( ( animals[animalIndex].body[cellLocalPositionI].growthMask & (1U << n)) == (1U << n) )                               // if the growth mask says this neighbour is ready
 			{
-				// printf("EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE\n");
+
+				// unsigned int rotatedN = (n + animals[animalIndex].body[cellLocalPositionI].growDirection) % nNeighbours;
 				unsigned int cellNeighbour = cellLocalPositionI + cellNeighbourOffsets[n];
 				if (cellNeighbour < animalSquareSize)
 				{
 					animals[animalIndex].body[cellNeighbour].origin     = cellLocalPositionI;
 					animals[animalIndex].body[cellNeighbour].geneCursor = animals[animalIndex].body[cellLocalPositionI].geneCursor ; // the neighbour will choose a gene at genecursor+1 anyway
-					animals[animalIndex].body[cellNeighbour].growDirection = n;//(1U << n);
+					animals[animalIndex].body[cellNeighbour].growDirection =  n;
 					animals[animalIndex].body[cellNeighbour].growthMask = 0x00;
 					animals[animalIndex].body[cellNeighbour].grown = false;
 				}
@@ -503,7 +583,7 @@ void grow( int animalIndex, unsigned int cellLocalPositionI)
 	if (gene < nNeighbours)                                                                                                                 // the gene is a direction, add it into the growth mask (lower 8 digits of the organ number), then fetch the next gene
 	{
 		animals[animalIndex].body[cellLocalPositionI].growthMask  ^= (1 << gene)  ; // toggle a bit in the growth mask
-		printf("animals[animalIndex].body[cellLocalPositionI].growthMask %u\n", animals[animalIndex].body[cellLocalPositionI].growthMask);
+		// printf("animals[animalIndex].body[cellLocalPositionI].growthMask %u\n", animals[animalIndex].body[cellLocalPositionI].growthMask);
 		return;
 	}
 	else                                                                                                                               // if the gene is a growable organ, grow it in this square, mark the square as completed, and then journey on to the activated neighbours
@@ -515,6 +595,37 @@ void grow( int animalIndex, unsigned int cellLocalPositionI)
 		{
 			animals[animalIndex].body[cellLocalPositionI].organ = gene;
 
+
+
+
+
+
+			if ( gene == ORGAN_SENSOR_FOOD ||
+			        gene == ORGAN_SENSOR_LIGHT ||
+			        gene == ORGAN_SENSOR_CREATURE ||
+			        gene == ORGAN_SENSOR_RANDOM ||
+			        gene == ORGAN_SENSOR_INVERT ||
+			        gene == ORGAN_SENSOR_HOME ||
+			        gene == ORGAN_SENSOR_PARENT	)
+			{
+				animals[animalIndex].body[cellLocalPositionI].sensorRange = baseSensorRange;
+				for (unsigned int n = 0; n < nNeighbours; ++n)
+				{
+
+					unsigned int cellNeighbour = cellLocalPositionI + cellNeighbourOffsets[n];
+					if (cellNeighbour < animalSquareSize)
+					{
+						if (animals[animalIndex].body[cellNeighbour].organ == gene)
+						{
+							animals[animalIndex].body[cellLocalPositionI].sensorRange += baseSensorRange;
+							animals[animalIndex].body[cellNeighbour].sensorRange = animals[animalIndex].body[cellLocalPositionI].sensorRange ;
+						}
+
+					}
+
+				}
+
+			}
 
 
 
@@ -630,7 +741,7 @@ void spawnAnimalIntoSlot( unsigned int animalIndex,  char * genes, unsigned int 
 	animals[animalIndex].body[cellLocalPositionI].grown = false;
 	animals[animalIndex].body[cellLocalPositionI].geneCursor = 0;
 	animals[animalIndex].mass = 1;
-	animals[animalIndex].energy = 0.5f;
+	// animals[animalIndex].energy = 0.5f;
 	memcpy (  &( animals[animalIndex].genes[0] ), genes, genomeSize * sizeof(char)  ); // transfer the parent entire gene code
 	if (mutation)
 	{
@@ -743,255 +854,6 @@ float getRelativeDirection (unsigned int a, unsigned int b)
 	return angle;
 }
 
-void sensor(int animalIndex, unsigned int cellLocalPositionI)
-{
-	unsigned int organ = animals[animalIndex].body[cellLocalPositionI].organ;
-	ZoneScoped;
-	if (organ == ORGAN_SENSOR_RANDOM)   // random sensors just random-walk the creature.
-	{
-		if (extremelyFastNumberFromZeroTo(animals[animalIndex].stride) == 0)
-		{
-			animals[animalIndex].body[cellLocalPositionI].signalIntensity = RNG() * 1.0f;
-			animals[animalIndex].body[cellLocalPositionI].signalLocation = RNG() * worldSquareSize;
-			for (unsigned int n = 0; n < nNeighbours; ++n)
-			{
-				unsigned int cellNeighbour = cellLocalPositionI + cellNeighbourOffsets[n];
-				if (cellNeighbour < animalSquareSize)
-				{
-					animals[animalIndex].body[cellNeighbour].signalIntensity = animals[animalIndex].body[cellLocalPositionI].signalIntensity;
-					animals[animalIndex].body[cellNeighbour].signalLocation = animals[animalIndex].body[cellLocalPositionI].signalLocation;
-				}
-			}
-		}
-		return;
-	}
-	float sign = 1;
-
-	// scan an area around the sensor and report the direction and intensity of the nearest match.
-	unsigned int sensorRange = baseSensorRange;
-	for (unsigned int n = 0; n < nNeighbours; ++n)
-	{
-		unsigned int cellNeighbour = cellLocalPositionI + cellNeighbourOffsets[n];
-		if (cellNeighbour < animalSquareSize)
-		{
-			if ((animals[animalIndex].body[cellNeighbour].organ == organ)) // the range is more if you have more sensors together.
-			{
-				sensorRange += baseSensorRange;
-			}
-
-			if (animals[animalIndex].body[cellNeighbour].organ  == ORGAN_SENSOR_INVERT)
-			{
-				sign *= -1.0f;
-			}
-		}
-	}
-
-	unsigned int animalWorldPositionX    = animals[animalIndex].position % worldSize;
-	unsigned int animalWorldPositionY    = animals[animalIndex].position / worldSize;
-	unsigned int cellLocalPositionX = cellLocalPositionI % animalSize;
-	unsigned int cellLocalPositionY = cellLocalPositionI / animalSize;
-	unsigned int cellWorldPositionX = cellLocalPositionX + animalWorldPositionX;
-	unsigned int cellWorldPositionY = cellLocalPositionY + animalWorldPositionY;
-	unsigned int cellWorldPositionI = (cellWorldPositionY * worldSize) + cellWorldPositionX;
-
-	if (organ == ORGAN_SENSOR_PARENT)
-	{
-		if (extremelyFastNumberFromZeroTo(animals[animalIndex].stride) == 0)
-		{
-			if (animals[animalIndex].parentIdentity > 0 && animals[animalIndex].parentIdentity < numberOfAnimals)
-			{
-				if (! animals[animals[animalIndex].parentIdentity].retired)
-				{
-					animals[animalIndex].body[cellLocalPositionI].signalIntensity = 1;//RNG() * 1.0f;
-					animals[animalIndex].body[cellLocalPositionI].signalLocation =  animals[animals[animalIndex].parentIdentity].position;//RNG() * worldSquareSize;
-					for (unsigned int n = 0; n < nNeighbours; ++n)
-					{
-						unsigned int cellNeighbour = cellLocalPositionI + cellNeighbourOffsets[n];
-						if (cellNeighbour < animalSquareSize)
-						{
-							animals[animalIndex].body[cellNeighbour].signalIntensity = animals[animalIndex].body[cellLocalPositionI].signalIntensity;
-							animals[animalIndex].body[cellNeighbour].signalLocation = animals[animalIndex].body[cellLocalPositionI].signalLocation;
-						}
-					}
-				}
-			}
-		}
-		return;
-	}
-
-	if (organ == ORGAN_SENSOR_HOME)
-	{
-		if (extremelyFastNumberFromZeroTo(animals[animalIndex].stride) == 0)
-		{
-			animals[animalIndex].body[cellLocalPositionI].signalIntensity = 1.0f;//RNG() * 1.0f;
-			animals[animalIndex].body[cellLocalPositionI].signalLocation = animals[animalIndex].birthLocation;//RNG() * worldSquareSize;
-			for (unsigned int n = 0; n < nNeighbours; ++n)
-			{
-				unsigned int cellNeighbour = cellLocalPositionI + cellNeighbourOffsets[n];
-				if (cellNeighbour < animalSquareSize)
-				{
-					animals[animalIndex].body[cellNeighbour].signalIntensity = animals[animalIndex].body[cellLocalPositionI].signalIntensity;
-					animals[animalIndex].body[cellNeighbour].signalLocation = animals[animalIndex].body[cellLocalPositionI].signalLocation;
-				}
-			}
-		}
-		return;
-	}
-
-	for (int n = 0; n < sensorFidelity; ++n)
-	{
-		unsigned int x = (cellWorldPositionX - sensorRange) + extremelyFastNumberFromZeroTo(sensorRange * 2);
-		unsigned int y = (cellWorldPositionY - sensorRange) + extremelyFastNumberFromZeroTo(sensorRange * 2);
-		bool detected = false;
-		if (x < worldSize && x > 0 && y < worldSize && y > 0)
-		{
-			unsigned int targetWorldPositionI =    (( y * worldSize ) + x ); // center the search area on the cell's world position.
-			if ( organ  == ORGAN_SENSOR_LIGHT)
-			{
-				if (world[targetWorldPositionI].light > animals[animalIndex].body[cellLocalPositionI].signalIntensity )
-				{
-					detected = true;
-				}
-			}
-			if (organ == ORGAN_SENSOR_FOOD)
-			{
-				if (world[targetWorldPositionI].material == MATERIAL_FOOD)
-				{
-					detected = true;
-				}
-			}
-			if (organ == ORGAN_SENSOR_CREATURE)
-			{
-				if (world[targetWorldPositionI].identity >= 0 &&
-				        world[targetWorldPositionI].identity < numberOfAnimals &&
-				        world[targetWorldPositionI].identity != animalIndex)
-				{
-					if (animals[world[targetWorldPositionI].identity].position == targetWorldPositionI) //only sense the present location of the animal, not where it has previously been.
-					{
-						detected = true;
-					}
-				}
-			}
-			if (detected)
-			{
-				// int distance   = igetRelativeDistance( animals[animalIndex].position, targetWorldPositionI );
-				// animals[animalIndex].body[cellLocalPositionI].signalLocation = targetWorldPositionI ;
-				// animals[animalIndex].body[cellLocalPositionI].signalIntensity = 1.0f;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-				// for (unsigned int n = 0; n < nNeighbours; ++n)
-				// {
-				// 	unsigned int cellNeighbour = cellLocalPositionI + cellNeighbourOffsets[n];
-				// 	if (cellNeighbour < animalSquareSize)
-				// 	{
-				// 		animals[animalIndex].body[cellNeighbour].signalIntensity = animals[animalIndex].body[cellLocalPositionI].signalIntensity  ;
-				// 		animals[animalIndex].body[cellNeighbour].signalLocation = animals[animalIndex].body[cellLocalPositionI].signalLocation;
-				// 	}
-				// }
-
-
-
-				for ( int excite_y =  - excitationRange; excite_y < excitationRange; ++excite_y)
-				{
-					for ( int excite_x = -excitationRange; excite_x <  excitationRange; ++excite_x)
-					{
-						int excitedX = cellLocalPositionX + excite_x;
-						int excitedY = cellLocalPositionY + excite_y;
-						int excitedI = (excitedY * animalSize) + excitedX;
-						if (excitedI < animalSquareSize)
-						{
-							float mag = abs(excite_x) + abs(excite_y);
-							if (mag < 1.0f) {mag = 1.0f;}
-							float sig =  animals[animalIndex].body[cellLocalPositionI].signalIntensity /  mag;
-							if (sig  > animals[animalIndex].body[excitedI].signalIntensity )
-							{
-								animals[animalIndex].body[excitedI].signalIntensity = sig;//animals[animalIndex].body[cellLocalPositionI].signalIntensity /  mag;
-								animals[animalIndex].body[excitedI].signalLocation = animals[animalIndex].body[cellLocalPositionI].signalLocation;
-							}
-						}
-					}
-				}
-
-
-
-
-
-
-
-
-
-
-			}
-			// else
-			// {
-			// 	float reductionRatio = 1.0f;
-			// 	if (animals[animalIndex].stride > 0)
-			// 	{
-			// 		reductionRatio = (1.0f - (0.05f / animals[animalIndex].stride));
-			// 	}
-			// 	else
-			// 	{
-			// 		reductionRatio = (1.0f - (0.05f));
-			// 	}
-
-			// 	animals[animalIndex].body[cellLocalPositionI].signalIntensity *= reductionRatio;
-
-
-
-			// 	// for (unsigned int n = 0; n < nNeighbours; ++n)
-			// 	// {
-			// 	// 	unsigned int cellNeighbour = cellLocalPositionI + cellNeighbourOffsets[n];
-			// 	// 	if (cellNeighbour < animalSquareSize)
-			// 	// 	{
-			// 	// 		animals[animalIndex].body[cellNeighbour].signalIntensity *= reductionRatio;
-			// 	// 	}
-			// 	// }
-
-			// 	// for ( int excite_y =  - excitationRange; excite_y < excitationRange; ++excite_y)
-			// 	// {
-			// 	// 	for ( int excite_x = -excitationRange; excite_x <  excitationRange; ++excite_x)
-			// 	// 	{
-			// 	// 		int excitedX = cellLocalPositionX + excite_x;
-			// 	// 		int excitedY = cellLocalPositionY + excite_y;
-			// 	// 		int excitedI = (excitedY * animalSize) + excitedX;
-			// 	// 		if (excitedI < animalSquareSize)
-			// 	// 		{
-			// 	// 			// float mag = abs(excite_x) + abs(excite_y);
-			// 	// 			// if (mag < 1.0f) (mag = 1.0f;)
-			// 	// 			// 	float sig =  animals[animalIndex].body[cellLocalPositionI].signalIntensity /  mag;
-			// 	// 			// if (sig  > animals[animalIndex].body[excitedI].signalIntensity )
-			// 	// 			// {
-			// 	// 				animals[animalIndex].body[excitedI].signalIntensity = sig;//animals[animalIndex].body[cellLocalPositionI].signalIntensity /  mag;
-			// 	// 				// animals[animalIndex].body[excitedI].signalLocation = animals[animalIndex].body[cellLocalPositionI].signalLocation;
-			// 	// 			}
-			// 	// 		}
-			// 	// 	}
-			// 	// }
-
-
-
-
-
-
-
-
-			// }
-		}
-	}
-}
 
 // check if an animal is currently occupying a square. return the local index of the occupying cell, otherwise, return -1 if not occupied.
 int isAnimalInSquare(unsigned int animalIndex, unsigned int cellWorldPositionX,  unsigned int cellWorldPositionY,  unsigned int cellWorldPositionI)
@@ -1023,6 +885,199 @@ int isAnimalInSquare(unsigned int animalIndex, unsigned int cellWorldPositionX, 
 	return -1;
 }
 
+void sensor(int animalIndex, unsigned int cellLocalPositionI)
+{
+
+
+	unsigned int organ = animals[animalIndex].body[cellLocalPositionI].organ;
+
+	if (organ == ORGAN_SENSOR_RANDOM)   // random sensors just random-walk the creature.
+	{
+		if (extremelyFastNumberFromZeroTo(animals[animalIndex].stride) == 0)
+		{
+			// animals[animalIndex].signalIntensity = RNG() * 1.0f;
+
+			animals[animalIndex].destinationX += (RNG() - 0.5f) * 0.1f;
+			animals[animalIndex].destinationY += (RNG() - 0.5f) * 0.1f;
+
+		}
+		return;
+	}
+
+
+	unsigned int animalWorldPositionX    = animals[animalIndex].position % worldSize;
+	unsigned int animalWorldPositionY    = animals[animalIndex].position / worldSize;
+	unsigned int cellLocalPositionX = cellLocalPositionI % animalSize;
+	unsigned int cellLocalPositionY = cellLocalPositionI / animalSize;
+	unsigned int cellWorldPositionX = cellLocalPositionX + animalWorldPositionX;
+	unsigned int cellWorldPositionY = cellLocalPositionY + animalWorldPositionY;
+	unsigned int cellWorldPositionI = (cellWorldPositionY * worldSize) + cellWorldPositionX;
+
+	if (organ == ORGAN_SENSOR_PARENT)
+	{
+		if (extremelyFastNumberFromZeroTo(animals[animalIndex].stride) == 0)
+		{
+			if (animals[animalIndex].parentIdentity > 0 && animals[animalIndex].parentIdentity < numberOfAnimals)
+			{
+				if (! animals[animals[animalIndex].parentIdentity].retired)
+				{
+					// animals[animalIndex].body[cellLocalPositionI].signalIntensity = 1;//RNG() * 1.0f;
+					// animals[animalIndex].body[cellLocalPositionI].signalLocation =  animals[animals[animalIndex].parentIdentity].position;//RNG() * worldSquareSize;
+
+					unsigned int parentPos = animals[animals[animalIndex].parentIdentity].position;
+					unsigned int parentPosX = parentPos % worldSize;
+					unsigned int parentPosY = parentPos / worldSize;
+
+					animals[animalIndex].destinationX += (parentPosX - animals[animalIndex].destinationX) * 0.1f;
+					animals[animalIndex].destinationY += (parentPosY - animals[animalIndex].destinationY) * 0.1f;
+
+					// for (unsigned int n = 0; n < nNeighbours; ++n)
+					// {
+					// 	unsigned int cellNeighbour = cellLocalPositionI + cellNeighbourOffsets[n];
+					// 	if (cellNeighbour < animalSquareSize)
+					// 	{
+					// 		animals[animalIndex].body[cellNeighbour].signalIntensity = animals[animalIndex].body[cellLocalPositionI].signalIntensity;
+					// 		animals[animalIndex].body[cellNeighbour].signalLocation = animals[animalIndex].body[cellLocalPositionI].signalLocation;
+					// 	}
+					// }
+				}
+			}
+		}
+		return;
+	}
+
+	if (organ == ORGAN_SENSOR_HOME)
+	{
+		if (extremelyFastNumberFromZeroTo(animals[animalIndex].stride) == 0)
+		{
+			// animals[animalIndex].body[cellLocalPositionI].signalIntensity = 1.0f;//RNG() * 1.0f;
+			// animals[animalIndex].body[cellLocalPositionI].signalLocation = animals[animalIndex].birthLocation;//RNG() * worldSquareSize;
+
+			unsigned int homePos = animals[animalIndex].birthLocation;//animals[animals[animalIndex].parentIdentity].position;
+			unsigned int homePosX = homePos % worldSize;
+			unsigned int homePosY = homePos / worldSize;
+
+			animals[animalIndex].destinationX += (homePosX - animals[animalIndex].destinationX) * 0.1f;
+			animals[animalIndex].destinationY += (homePosY - animals[animalIndex].destinationY) * 0.1f;
+
+
+			// for (unsigned int n = 0; n < nNeighbours; ++n)
+			// {
+			// 	unsigned int cellNeighbour = cellLocalPositionI + cellNeighbourOffsets[n];
+			// 	if (cellNeighbour < animalSquareSize)
+			// 	{
+			// 		animals[animalIndex].body[cellNeighbour].signalIntensity = animals[animalIndex].body[cellLocalPositionI].signalIntensity;
+			// 		animals[animalIndex].body[cellNeighbour].signalLocation = animals[animalIndex].body[cellLocalPositionI].signalLocation;
+			// 	}
+			// }
+		}
+		return;
+	}
+
+	// for (int n = 0; n < sensorFidelity; ++n)
+	// {
+	unsigned int x = (cellWorldPositionX - animals[animalIndex].body[cellLocalPositionI].sensorRange) + extremelyFastNumberFromZeroTo( animals[animalIndex].body[cellLocalPositionI]. sensorRange * 2);
+	unsigned int y = (cellWorldPositionY - animals[animalIndex].body[cellLocalPositionI].sensorRange) + extremelyFastNumberFromZeroTo( animals[animalIndex].body[cellLocalPositionI]. sensorRange * 2);
+	bool detected = false;
+	if (x < worldSize && x > 0 && y < worldSize && y > 0)
+	{
+		unsigned int targetWorldPositionI =    (( y * worldSize ) + x ); // center the search area on the cell's world position.
+		if ( organ  == ORGAN_SENSOR_LIGHT)
+		{
+			unsigned int virtualDestination = (animals[animalIndex].destinationY * worldSize) + animals[animalIndex].destinationX;
+			if (virtualDestination < worldSquareSize)
+			{
+				if (world[targetWorldPositionI].light > world[virtualDestination].light )
+				{
+					detected = true;
+				}
+			}
+		}
+		if (organ == ORGAN_SENSOR_FOOD)
+		{
+			if (world[targetWorldPositionI].material == MATERIAL_FOOD)
+			{
+				detected = true;
+			}
+		}
+		if (organ == ORGAN_SENSOR_CREATURE)
+		{
+			if (world[targetWorldPositionI].identity >= 0 &&
+			        world[targetWorldPositionI].identity < numberOfAnimals &&
+			        world[targetWorldPositionI].identity != animalIndex)
+			{
+
+
+				if (
+
+				    // animals[world[targetWorldPositionI].identity].position == targetWorldPositionI
+
+
+
+// check if an animal is currently occupying a square. return the local index of the occupying cell, otherwise, return -1 if not occupied.
+// int isAnimalInSquare(unsigned int animalIndex, unsigned int cellWorldPositionX,  unsigned int cellWorldPositionY,  unsigned int cellWorldPositionI)
+
+
+				    isAnimalInSquare(world[targetWorldPositionI].identity , x, y, targetWorldPositionI) > 0
+				) //only sense the present location of the animal, not where it has previously been.
+				{
+					detected = true;
+				}
+			}
+		}
+
+
+
+
+		if (detected)
+		{
+
+			// for ( int excite_y =  - excitationRange; excite_y < excitationRange; ++excite_y)
+			// {
+			// 	for ( int excite_x = -excitationRange; excite_x <  excitationRange; ++excite_x)
+			// // 	{
+			// 		int excitedX = cellLocalPositionX + excite_x;
+			// 		int excitedY = cellLocalPositionY + excite_y;
+			// 		if (excitedX < 0 || excitedX >= animalSize || excitedY < 0 || excitedY >= animalSize) { continue;}
+			// 		int excitedI = (excitedY * animalSize) + excitedX;
+			// 		if (excitedI < animalSquareSize)
+			// 		{
+			// 			float mag = abs(excite_x) + abs(excite_y);
+			// 			if (mag < 1.0f) {mag = 1.0f;}
+			// 			float sig =  animals[animalIndex].body[cellLocalPositionI].signalIntensity /  mag;
+			// 			if (sig  > animals[animalIndex].body[excitedI].signalIntensity )
+			// 			{
+			// 				animals[animalIndex].body[excitedI].signalIntensity = sig;//animals[animalIndex].body[cellLocalPositionI].signalIntensity /  mag;
+			// animals[animalIndex].body[excitedI].signalLocation = animals[animalIndex].body[cellLocalPositionI].signalLocation;
+
+
+
+
+			// unsigned int parentPos = targetWorldPositionI ;//animals[animals[animalIndex].parentIdentity].position;
+			unsigned int targetPosX = targetWorldPositionI % worldSize;
+			unsigned int targetPosY = targetWorldPositionI / worldSize;
+
+			animals[animalIndex].destinationX += (targetPosX - animals[animalIndex]. destinationX) * 0.1f;
+			animals[animalIndex].destinationY += (targetPosY - animals[animalIndex]. destinationY) * 0.1f;
+
+
+
+
+
+			// 	}
+			// }
+			// 	}
+			// }
+		}
+	}
+	// }
+
+
+
+
+}
+
+
 int defenseAtPoint(unsigned int animalIndex, unsigned int cellLocalPositionI)
 {
 
@@ -1051,10 +1106,12 @@ void grow_all()
 	ZoneScoped;
 
 	// grow all growable cells.
+	unsigned int newpop = 0;
 	for (unsigned int animalIndex = 0; animalIndex < numberOfAnimals; ++animalIndex)
 	{
 		if (!animals[animalIndex].retired)
 		{
+			newpop++;
 			if (animals[animalIndex].energyDebt > 0.0f)
 			{
 				float amount = animals[animalIndex].energy - (animals[animalIndex].mass / 2.0f);
@@ -1073,6 +1130,7 @@ void grow_all()
 			}
 		}
 	}
+	populationCount = newpop;
 }
 
 
@@ -1094,16 +1152,16 @@ void organs_all()
 
 
 
-				float reductionRatio = 1.0f;
-				if (animals[animalIndex].stride > 0)
-				{
-					reductionRatio = (1.0f - (0.05f / animals[animalIndex].stride));
-				}
-				else
-				{
-					reductionRatio = (1.0f - (0.05f));
-				}
-				animals[animalIndex].body[cellLocalPositionI].signalIntensity *= reductionRatio;
+				// float reductionRatio = 1.0f;
+				// if (animals[animalIndex].stride > 0)
+				// {
+				// 	reductionRatio = (1.0f - (0.05f / animals[animalIndex].stride));
+				// }
+				// else
+				// {
+				// 	reductionRatio = (1.0f - (0.05f));
+				// }
+				// animals[animalIndex].body[cellLocalPositionI].signalIntensity *= reductionRatio;
 
 
 
@@ -1207,28 +1265,45 @@ void organs_all()
 					{
 						if (doMuscles)
 						{
+
+
+							unsigned int animalWorldPositionX    = animals[animalIndex].position % worldSize;
+							unsigned int animalWorldPositionY    = animals[animalIndex].position / worldSize;
+
 							// go through your neighbours. find their angles.
 							// break angle down into x and y component (doing it this way decouples intensity from the distance. they usually mean the same thing, but it is good to have options).
 							// multiply components by the intensity. add the multiplied components together into a final vector. basically this whole process is a vector addition.
 							float muscleX = 0.0f;
 							float muscleY = 0.0f;
-							for (unsigned int n = 0; n < nNeighbours; ++n)
+							// for (unsigned int n = 0; n < nNeighbours; ++n)
+							// {
+							// 	unsigned int cellNeighbour = cellLocalPositionI + cellNeighbourOffsets[n];
+							// 	if (cellNeighbour < animalSquareSize)
+							// 	{
+							// 		if ( abs(animals[animalIndex].body[cellNeighbour].signalIntensity) > 0.001f && animals[animalIndex].body[cellNeighbour].signalLocation != 0)
+							// 		{
+							// 			float angle = getRelativeDirection( animals[animalIndex].position, animals[animalIndex].body[cellNeighbour].signalLocation  );
+							// 			muscleX += (cos(angle) * animals[animalIndex].body[cellNeighbour].signalIntensity);
+							// 			muscleY += (sin(angle) * animals[animalIndex].body[cellNeighbour].signalIntensity);
+							// 		}
+							// 	}
+							// }
+
+
+							float diffX = (animals[animalIndex].destinationX - animalWorldPositionX);
+							float diffY = (animals[animalIndex].destinationY - animalWorldPositionY);
+							float diffSum = abs(diffX) + abs(diffY);
+
+							if (diffSum != 0.0f)
 							{
-								unsigned int cellNeighbour = cellLocalPositionI + cellNeighbourOffsets[n];
-								if (cellNeighbour < animalSquareSize)
-								{
-									if ( abs(animals[animalIndex].body[cellNeighbour].signalIntensity) > 0.001f && animals[animalIndex].body[cellNeighbour].signalLocation != 0)
-									{
-										float angle = getRelativeDirection( animals[animalIndex].position, animals[animalIndex].body[cellNeighbour].signalLocation  );
-										muscleX += (cos(angle) * animals[animalIndex].body[cellNeighbour].signalIntensity);
-										muscleY += (sin(angle) * animals[animalIndex].body[cellNeighbour].signalIntensity);
-									}
-								}
+								muscleX = diffX / diffSum;
+								muscleY = diffY / diffSum;
 							}
+
 							if (animals[animalIndex].mass > 0)
 							{
-								animals[animalIndex].fPosX += ( muscleX) / animals[animalIndex].mass;
-								animals[animalIndex].fPosY += ( muscleY) / animals[animalIndex].mass;
+								animals[animalIndex].fPosX += ( muscleX ) / animals[animalIndex].mass;
+								animals[animalIndex].fPosY += ( muscleY ) / animals[animalIndex].mass;
 							}
 							animals[animalIndex].energy -= (muscleX + muscleY) * movementEnergyScale * energyScaleOut;
 						}
@@ -1283,7 +1358,7 @@ void move_all() // perform movement, feeding, and combat.
 							unsigned int cellWorldPositionY = cellLocalPositionY + animalWorldPositionY;
 							unsigned int cellWorldPositionI = (cellWorldPositionY * worldSize) + cellWorldPositionX;
 
-							if (world[cellWorldPositionI].identity >= 0 && world[cellWorldPositionI].identity != animalIndex)
+							if (world[cellWorldPositionI].identity >= 0 && world[cellWorldPositionI].identity != animalIndex && world[cellWorldPositionI].identity < numberOfAnimals)
 							{
 								int targetLocalPositionI = isAnimalInSquare( world[cellWorldPositionI].identity, cellWorldPositionX, cellWorldPositionY, cellWorldPositionI);
 								if (targetLocalPositionI >= 0)
@@ -1306,7 +1381,7 @@ void move_all() // perform movement, feeding, and combat.
 										if (extremelyFastNumberFromZeroTo(defense) == 0)
 										{
 											animals[world[cellWorldPositionI].identity].body[targetLocalPositionI].organ = MATERIAL_NOTHING;
-											animals[world[cellWorldPositionI].identity].body[targetLocalPositionI].signalIntensity = 0.0f;
+											// animals[world[cellWorldPositionI].identity].body[targetLocalPositionI].signalIntensity = 0.0f;
 
 											if (animals[world[cellWorldPositionI].identity].mass >= 1)
 											{
@@ -1343,11 +1418,13 @@ void move_all() // perform movement, feeding, and combat.
 void energy_all() // perform energies.
 {
 	ZoneScoped;
-	unsigned int newPopulationCount = 0;
+	// unsigned int newPopulationCount = 0;
 	for (unsigned int animalIndex = 0; animalIndex < numberOfAnimals; ++animalIndex)
 	{
 		if (!animals[animalIndex].retired)
 		{
+
+			// newPopulationCount++;
 			if (animals[animalIndex].energy > animals[animalIndex].maxEnergy) {animals[animalIndex].energy = animals[animalIndex].maxEnergy;}
 			if (!immortality)// die
 			{
@@ -1377,19 +1454,27 @@ void energy_all() // perform energies.
 					}
 				}
 			}
-			newPopulationCount++;
 		}
 	}
-	populationCount = newPopulationCount;
+	// populationCount = newPopulationCount;
 }
 
 void computeAllAnimalsOneTurn()
 {
 	ZoneScoped;
-	grow_all();
-	organs_all();
-	move_all();
-	energy_all();
+
+
+
+	// boost::thread t7{ interfaceSupervisor };
+	boost::thread t7{ grow_all   };
+	boost::thread t8{ organs_all };
+	boost::thread t9{ move_all   };
+	boost::thread t10{ energy_all };
+
+	t10.join();
+	t9.join();
+	t8.join();
+	t7.join();
 }
 
 void camera()
@@ -1402,10 +1487,18 @@ void camera()
 		{
 			if (cameraTargetCreature >= 0)
 			{
-				unsigned int creatureX = animals[cameraTargetCreature].position % worldSize;
-				unsigned int creatureY = animals[cameraTargetCreature].position / worldSize;
-				cameraPositionX = creatureX - (viewFieldX / 2) % worldSize;
-				cameraPositionY = creatureY - (viewFieldY / 2) % worldSize;
+				int creatureX = animals[cameraTargetCreature].position;
+				int creatureY = animals[cameraTargetCreature].position;
+
+				int newCameraPositionX = creatureX - (viewFieldX / 2);
+				int newCameraPositionY = creatureY - (viewFieldY / 2);
+
+				if (newCameraPositionX > 0 && newCameraPositionX < worldSize && newCameraPositionY > 0 && newCameraPositionY < worldSize)
+				{
+					// if (newCameraPositionX > 0 && crea)
+					cameraPositionX = newCameraPositionX;
+					cameraPositionY = newCameraPositionY;
+				}
 				if (animals[cameraTargetCreature].retired)
 				{
 					cameraTargetCreature = -1;
@@ -1437,101 +1530,107 @@ void camera()
 					}
 				}
 			}
-			unsigned int worldX = (cameraPositionX + vx) % worldSize; // center the view on the targeted position, instead of having it in the corner
-			unsigned int worldY = (cameraPositionY + vy) % worldSize;
-			unsigned int worldI = (worldY * worldSize) + worldX;
+			int worldX = (cameraPositionX + vx) % worldSize; // center the view on the targeted position, instead of having it in the corner
+			int worldY = (cameraPositionY + vy) % worldSize;
+			int worldI = (worldY * worldSize) + worldX;
 			char displayChar = ' ';
-			if (worldI < worldSquareSize && worldX < worldSize && worldY < worldSize)
+			if (worldX > 0 && worldX < worldSize && worldY > 0 && worldY < worldSize)
 			{
-				if (world[worldI].material == MATERIAL_ROCK)
+				if (worldI < worldSquareSize)
 				{
-					displayChar = '#';
-				}
-				else if (world[worldI].material == MATERIAL_FOOD)
-				{
-					displayChar = '@';
-				}
-				else if (world[worldI].material == MATERIAL_WATER)
-				{
-					displayChar = '~';
-				}
-
-				if (world[worldI].identity > -1)
-				{
-					if (world[worldI].identity == cameraTargetCreature)
+					if (world[worldI].material == MATERIAL_ROCK)
 					{
-						displayChar = '-';
-						if (world[worldI].material == MATERIAL_ROCK)
-						{
-							displayChar = '#';
-						}
-						else if (world[worldI].material == MATERIAL_FOOD)
-						{
-							displayChar = '@';
-						}
-						else if (world[worldI].material == MATERIAL_WATER)
-						{
-							displayChar = '~';
-						}
+						displayChar = '#';
 					}
-					else
+					else if (world[worldI].material == MATERIAL_FOOD)
 					{
-						displayChar = '_';
+						displayChar = '@';
 					}
-					if (world[worldI].identity < numberOfAnimals)
+					else if (world[worldI].material == MATERIAL_WATER)
 					{
-						int targetLocalPositionI = isAnimalInSquare(world[worldI].identity , worldX, worldY, worldI);
+						displayChar = '~';
+					}
 
-						if (targetLocalPositionI >= 0)
+					if (world[worldI].identity > -1)
+					{
+						if (world[worldI].identity == cameraTargetCreature)
 						{
-							if ((animals[   world[worldI].identity  ].body[targetLocalPositionI].organ != MATERIAL_NOTHING))
+							displayChar = '-';
+							if (world[worldI].material == MATERIAL_ROCK)
 							{
-								displayChar = '?';
+								displayChar = '#';
 							}
-							if ((animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == 0x00))
+							else if (world[worldI].material == MATERIAL_FOOD)
 							{
-								displayChar = '0';
+								displayChar = '@';
 							}
-							if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == DIRECTION_L)           { displayChar = '<'; }
-							if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == DIRECTION_DL)          { displayChar = '['; }
-							if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == DIRECTION_D)           { displayChar = 'V'; }
-							if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == DIRECTION_DR)          { displayChar = ']'; }
-							if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == DIRECTION_R)           { displayChar = '>'; }
-							if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == DIRECTION_UR)          { displayChar = '}'; }
-							if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == DIRECTION_U)           { displayChar = '^'; }
-							if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == DIRECTION_UL)          { displayChar = '{'; }
-							if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == ORGAN_LIVER)           { displayChar = 'L'; }
-							if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == ORGAN_BONE)            { displayChar = 'B'; }
-							if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == ORGAN_WEAPON)          { displayChar = 'W'; }
-							if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == ORGAN_LEAF)            { displayChar = 'P'; }
-							if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == ORGAN_MOUTH)           { displayChar = 'O'; }
-							if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == ORGAN_GONAD)           { displayChar = 'G'; }
-							if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == ORGAN_MUSCLE)          { displayChar = 'M'; }
-							if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == ORGAN_SENSOR_FOOD)     { displayChar = 'F'; }
-							if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == ORGAN_SENSOR_CREATURE) { displayChar = 'C'; }
-							if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == ORGAN_SENSOR_LIGHT)    { displayChar = 'Y'; }
-							if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == ORGAN_SENSOR_RANDOM)   { displayChar = 'R'; }
-							if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == ORGAN_SENSOR_INVERT)   { displayChar = 'I'; }
-							if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == ORGAN_SENSOR_HOME)     { displayChar = 'H'; }
-							if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == ORGAN_SENSOR_PARENT)   { displayChar = 'K'; }
-							if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == GROW_END)                { displayChar = '!'; }
-							if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == GROW_BRANCH)             { displayChar = '@'; }
-							if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == GROW_STRIDE)             { displayChar = '#'; }
-							if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == GROW_SEQUENCE)           { displayChar = '$'; }
-							if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == GROW_ADDOFFSPRINGENERGY) { displayChar = '%'; }
-							if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == MATERIAL_ROCK)           { displayChar = '&'; }
-							if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == MATERIAL_WATER)          { displayChar = '*'; }
-							if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == MARKER)                  { displayChar = '('; }
+							else if (world[worldI].material == MATERIAL_WATER)
+							{
+								displayChar = '~';
+							}
+						}
+						else
+						{
+							displayChar = '_';
+						}
+						if (world[worldI].identity < numberOfAnimals)
+						{
+							if (!animals[world[worldI].identity].retired)
+							{
+								int targetLocalPositionI = isAnimalInSquare(world[worldI].identity , worldX, worldY, worldI);
+
+								if (targetLocalPositionI >= 0)
+								{
+									if ((animals[   world[worldI].identity  ].body[targetLocalPositionI].organ != MATERIAL_NOTHING))
+									{
+										displayChar = '?';
+									}
+									if ((animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == 0x00))
+									{
+										displayChar = '0';
+									}
+									if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == DIRECTION_L)           { displayChar = '<'; }
+									if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == DIRECTION_DL)          { displayChar = '['; }
+									if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == DIRECTION_D)           { displayChar = 'V'; }
+									if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == DIRECTION_DR)          { displayChar = ']'; }
+									if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == DIRECTION_R)           { displayChar = '>'; }
+									if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == DIRECTION_UR)          { displayChar = '}'; }
+									if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == DIRECTION_U)           { displayChar = '^'; }
+									if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == DIRECTION_UL)          { displayChar = '{'; }
+									if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == ORGAN_LIVER)           { displayChar = 'L'; }
+									if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == ORGAN_BONE)            { displayChar = 'B'; }
+									if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == ORGAN_WEAPON)          { displayChar = 'W'; }
+									if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == ORGAN_LEAF)            { displayChar = 'P'; }
+									if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == ORGAN_MOUTH)           { displayChar = 'O'; }
+									if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == ORGAN_GONAD)           { displayChar = 'G'; }
+									if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == ORGAN_MUSCLE)          { displayChar = 'M'; }
+									if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == ORGAN_SENSOR_FOOD)     { displayChar = 'F'; }
+									if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == ORGAN_SENSOR_CREATURE) { displayChar = 'C'; }
+									if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == ORGAN_SENSOR_LIGHT)    { displayChar = 'Y'; }
+									if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == ORGAN_SENSOR_RANDOM)   { displayChar = 'R'; }
+									if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == ORGAN_SENSOR_INVERT)   { displayChar = 'I'; }
+									if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == ORGAN_SENSOR_HOME)     { displayChar = 'H'; }
+									if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == ORGAN_SENSOR_PARENT)   { displayChar = 'K'; }
+									if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == GROW_END)                { displayChar = '!'; }
+									if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == GROW_BRANCH)             { displayChar = '@'; }
+									if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == GROW_STRIDE)             { displayChar = '#'; }
+									if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == GROW_SEQUENCE)           { displayChar = '$'; }
+									if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == GROW_ADDOFFSPRINGENERGY) { displayChar = '%'; }
+									if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == MATERIAL_ROCK)           { displayChar = '&'; }
+									if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == MATERIAL_WATER)          { displayChar = '*'; }
+									if (animals[   world[worldI].identity  ].body[targetLocalPositionI].organ == MARKER)                  { displayChar = '('; }
+								}
+							}
 						}
 					}
 				}
 			}
 
+			// print borders (this is useful to see if the image is distorted- if the border is not a clean square)
 			if (vx == 0 || vx == viewFieldX - 1 )
 			{
 				displayChar = '|';
 			}
-
 			if (vy == 0 || vy == viewFieldY - 1 )
 			{
 				displayChar = '_';
@@ -1608,14 +1707,14 @@ void setupTournamentAnimals()
 		int newAnimal = spawnAnimal( exampleAnimal, targetWorldPositionI, true);
 		if (newAnimal >= 0)
 		{
-			if (extremelyFastNumberFromZeroTo(1) == 0)
-			{
-				setupExampleAnimal(newAnimal);
-			}
-			else
-			{
-				examplePlant(newAnimal);
-			}
+			// if (extremelyFastNumberFromZeroTo(1) == 0)
+			// {
+			// 	// setupExampleAnimal(newAnimal);
+			// }
+			// else
+			// {
+			examplePlant(newAnimal);
+			// }
 		}
 	}
 }
@@ -1641,53 +1740,7 @@ void setupRandomWorld()
 	// spawn the example creature in the center field of view in an empty world.
 	if (worldToLoad == WORLD_EXAMPLECREATURE)
 	{
-		if (false)
-		{
-			printf("placing materials\n");
 
-			// initial random materials.
-			for (unsigned int worldPositionI = 0; worldPositionI < worldSquareSize; ++worldPositionI)
-			{
-				unsigned int x = worldPositionI % worldSize;
-				unsigned int y = worldPositionI / worldSize;
-
-				if (extremelyFastNumberFromZeroTo(50) == 0)
-				{
-					world[worldPositionI].material = MATERIAL_FOOD;
-				}
-			}
-
-			printf("growing materials \n");
-			// for (int i = 0; i < 10; ++i)
-			// {
-
-			// 	printf("%i\n", i);
-			// 	// expand the light
-			// 	for (unsigned int worldPositionI = 0; worldPositionI < worldSquareSize; ++worldPositionI)
-			// 	{
-			// 		unsigned int nRockNeighbours = 0;
-			// 		for (unsigned int n = 0; n < nNeighbours; ++n)
-			// 		{
-			// 			unsigned int worldNeighbour = worldPositionI + neighbourOffsets[n];
-			// 			if (worldNeighbour < worldSquareSize)
-			// 			{
-			// 				if (world[worldNeighbour].material == MATERIAL_LIGHT)
-			// 				{
-			// 					nRockNeighbours++;
-			// 				}
-			// 			}
-			// 		}
-			// 		if (nRockNeighbours == 1) {  world[worldPositionI].material = MARKER;}
-			// 	}
-			// 	for (unsigned int worldPositionI = 0; worldPositionI < worldSquareSize; ++worldPositionI)
-			// 	{
-			// 		if (world[worldPositionI].material == MARKER)
-			// 		{
-			// 			world[worldPositionI].material = MATERIAL_LIGHT;
-			// 		}
-			// 	}
-			// }
-		}
 
 		unsigned int targetWorldPositionX = cameraPositionX + (viewFieldX / 2);
 		unsigned int targetWorldPositionY = cameraPositionY + (viewFieldY / 2);
@@ -1702,8 +1755,11 @@ void setupRandomWorld()
 
 			setupExampleAnimal(animalIndex);
 
-			// world[targetWorldPositionI].material = MATERIAL_FOOD;
 		}
+
+		unsigned int foodpos = targetWorldPositionI + (10 * worldSize) + 10;
+
+		world[foodpos].material = MATERIAL_FOOD;
 	}
 	else if (worldToLoad == WORLD_RANDOM)
 	{
@@ -1787,6 +1843,7 @@ void model()
 	computeAllAnimalsOneTurn();
 
 	populationController();
+
 	if (tournament)
 	{
 		if (tournamentCounter >= tournamentInterval )
