@@ -1,6 +1,5 @@
 file(REMOVE_RECURSE
   "CMakeFiles/game.dir/src/game.cpp.o"
-  "CMakeFiles/game.dir/tracy/TracyClient.cpp.o"
   "game"
   "game.pdb"
 )

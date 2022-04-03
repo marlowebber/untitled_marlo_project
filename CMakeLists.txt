@@ -14,12 +14,12 @@ find_package(SDL2 REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(Boost REQUIRED COMPONENTS filesystem thread)
 
-add_definitions(-DTRACY_ENABLE)
+#add_definitions(-DTRACY_ENABLE)
 
 # Define the framework files.
 set(SRCS
-	tracy/Tracy.hpp
-	tracy/TracyClient.cpp
+	#tracy/Tracy.hpp
+	#tracy/TracyClient.cpp
 	src/game.cpp
 )
 

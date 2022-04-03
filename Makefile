@@ -150,33 +150,6 @@ src/game.cpp.s:
 	$(MAKE) -f CMakeFiles/game.dir/build.make CMakeFiles/game.dir/src/game.cpp.s
 .PHONY : src/game.cpp.s
 
-tracy/TracyClient.o: tracy/TracyClient.cpp.o
-
-.PHONY : tracy/TracyClient.o
-
-# target to build an object file
-tracy/TracyClient.cpp.o:
-	$(MAKE) -f CMakeFiles/game.dir/build.make CMakeFiles/game.dir/tracy/TracyClient.cpp.o
-.PHONY : tracy/TracyClient.cpp.o
-
-tracy/TracyClient.i: tracy/TracyClient.cpp.i
-
-.PHONY : tracy/TracyClient.i
-
-# target to preprocess a source file
-tracy/TracyClient.cpp.i:
-	$(MAKE) -f CMakeFiles/game.dir/build.make CMakeFiles/game.dir/tracy/TracyClient.cpp.i
-.PHONY : tracy/TracyClient.cpp.i
-
-tracy/TracyClient.s: tracy/TracyClient.cpp.s
-
-.PHONY : tracy/TracyClient.s
-
-# target to generate assembly for a file
-tracy/TracyClient.cpp.s:
-	$(MAKE) -f CMakeFiles/game.dir/build.make CMakeFiles/game.dir/tracy/TracyClient.cpp.s
-.PHONY : tracy/TracyClient.cpp.s
-
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -189,9 +162,6 @@ help:
 	@echo "... src/game.o"
 	@echo "... src/game.i"
 	@echo "... src/game.s"
-	@echo "... tracy/TracyClient.o"
-	@echo "... tracy/TracyClient.i"
-	@echo "... tracy/TracyClient.s"
 .PHONY : help
 
 
