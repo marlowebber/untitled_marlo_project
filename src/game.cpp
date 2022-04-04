@@ -88,6 +88,9 @@ const bool tournament            = true;
 const bool taxIsByMass           = true;
 const bool threading             = true;
 const bool cameraFollowsChampion = true;
+const bool sexualViolence        = false;
+const bool variedGrowthCost      = false;
+const bool variedUpkeep          = false;
 
 unsigned int worldToLoad = WORLD_RANDOM;
 
@@ -101,10 +104,11 @@ const unsigned int worldSquareSize       = worldSize * worldSize;
 const unsigned int genomeSize      = 16;
 const unsigned int numberOfAnimals = 10000;
 const unsigned int numberOfSpecies = 10;
+unsigned int numberOfAnimalsPerSpecies = (numberOfAnimals / numberOfSpecies);
 const unsigned int nNeighbours     = 8;
 const float growthEnergyScale      = 1.0f;        // a multiplier for how much it costs animals to make new cells.
-const float taxEnergyScale         = 0.1f;        // a multiplier for how much it costs animals just to exist.
-const float lightEnergy            = 0.1f;   // how much energy an animal gains each turn from having a leaf. if tax is by mass, must be higher than taxEnergyScale to be worth having leaves at all.
+const float taxEnergyScale         = 0.001f;        // a multiplier for how much it costs animals just to exist.
+const float lightEnergy            = 0.01f;   // how much energy an animal gains each turn from having a leaf. if tax is by mass, must be higher than taxEnergyScale to be worth having leaves at all.
 const float movementEnergyScale    = 0.0f;        // a multiplier for how much it costs animals to move.
 const float foodEnergy             = 0.85f;                     // how much you get from eating a piece of meat. should be less than 1 to avoid meat tornado
 const float liverStorage = 10.0f;
@@ -217,35 +221,38 @@ float organGrowthCost(unsigned int organ)
 	if (growingCostsEnergy)
 	{
 		growthCost = 1.0f;
-		switch (organ)
+		if (variedGrowthCost)
 		{
-		case ORGAN_LEAF:
-			growthCost *= 1.0f;
-			break;
-		case ORGAN_MUSCLE:
-			growthCost *= 1.0f;
-			break;
-		case ORGAN_BONE:
-			growthCost *= 1.0f;
-			break;
-		case ORGAN_WEAPON:
-			growthCost *= 2.0f;
-			break;
-		case ORGAN_SENSOR_FOOD:
-			growthCost *= 2.0f;
-			break;
-		case ORGAN_SENSOR_LIGHT:
-			growthCost *= 2.0f;
-			break;
-		case ORGAN_SENSOR_CREATURE:
-			growthCost *= 2.0f;
-			break;
-		case ORGAN_GONAD:
-			growthCost *= 10.0f;
-			break;
-		case ORGAN_MOUTH:
-			growthCost *= 10.0f;
-			break;
+			switch (organ)
+			{
+			case ORGAN_LEAF:
+				growthCost *= 1.0f;
+				break;
+			case ORGAN_MUSCLE:
+				growthCost *= 1.0f;
+				break;
+			case ORGAN_BONE:
+				growthCost *= 1.0f;
+				break;
+			case ORGAN_WEAPON:
+				growthCost *= 2.0f;
+				break;
+			case ORGAN_SENSOR_FOOD:
+				growthCost *= 2.0f;
+				break;
+			case ORGAN_SENSOR_LIGHT:
+				growthCost *= 2.0f;
+				break;
+			case ORGAN_SENSOR_CREATURE:
+				growthCost *= 2.0f;
+				break;
+			case ORGAN_GONAD:
+				growthCost *= 10.0f;
+				break;
+			case ORGAN_MOUTH:
+				growthCost *= 10.0f;
+				break;
+			}
 		}
 	}
 	return growthCost;
@@ -254,39 +261,44 @@ float organGrowthCost(unsigned int organ)
 float organUpkeepCost(unsigned int organ)
 {
 	float upkeepCost = 1.0f;
-	switch (organ)
+
+	if (variedUpkeep)
 	{
-	case ORGAN_LEAF:
-		upkeepCost *= 0.0f;
-		break;
-	case ORGAN_BONE:
-		upkeepCost *= 0.0f;
-		break;
-	case ORGAN_WEAPON:
-		upkeepCost *= 0.0f;
-		break;
-	case ORGAN_MOUTH:
-		upkeepCost *= 0.5f;
-		break;
-	case ORGAN_MUSCLE:
-		upkeepCost *= 1.0f;
-		break;
-	case ORGAN_GONAD:
-		upkeepCost *= 2.0f;
-		break;
-	case ORGAN_LIVER:
-		upkeepCost *= 1.0f;
-		break;
-	case ORGAN_SENSOR_FOOD:
-		upkeepCost *= 3.0f;
-		break;
-	case ORGAN_SENSOR_LIGHT:
-		upkeepCost *= 3.0f;
-		break;
-	case ORGAN_SENSOR_CREATURE:
-		upkeepCost *= 3.0f;
-		break;
+		switch (organ)
+		{
+		case ORGAN_LEAF:
+			upkeepCost *= 0.0f;
+			break;
+		case ORGAN_BONE:
+			upkeepCost *= 0.0f;
+			break;
+		case ORGAN_WEAPON:
+			upkeepCost *= 0.0f;
+			break;
+		case ORGAN_MOUTH:
+			upkeepCost *= 0.5f;
+			break;
+		case ORGAN_MUSCLE:
+			upkeepCost *= 1.0f;
+			break;
+		case ORGAN_GONAD:
+			upkeepCost *= 2.0f;
+			break;
+		case ORGAN_LIVER:
+			upkeepCost *= 1.0f;
+			break;
+		case ORGAN_SENSOR_FOOD:
+			upkeepCost *= 3.0f;
+			break;
+		case ORGAN_SENSOR_LIGHT:
+			upkeepCost *= 3.0f;
+			break;
+		case ORGAN_SENSOR_CREATURE:
+			upkeepCost *= 3.0f;
+			break;
+		}
 	}
+
 	return upkeepCost;
 }
 
@@ -554,7 +566,7 @@ void grow( int animalIndex, unsigned int cellLocalPositionI)
 int getNewIdentity(unsigned int speciesIndex)
 {
 	int animalIndex;
-	for ( animalIndex = speciesIndex * (numberOfAnimals / numberOfSpecies); animalIndex < (speciesIndex + 1) * (numberOfAnimals / numberOfSpecies); ++animalIndex)
+	for ( animalIndex = speciesIndex * numberOfAnimalsPerSpecies; animalIndex < (speciesIndex + 1) * numberOfAnimalsPerSpecies; ++animalIndex)
 	{
 		if (animalIndex < numberOfAnimals && animalIndex >= 0)
 		{
@@ -984,7 +996,7 @@ void organs_all()
 
 		// if (animalIndex > populationCount) {break;}
 
-		unsigned int speciesIndex = animalIndex / (numberOfAnimals / numberOfSpecies);
+		unsigned int speciesIndex = animalIndex / numberOfAnimalsPerSpecies;
 		if (!animals[animalIndex].retired)
 		{
 			unsigned int cellsDone = 0;
@@ -1039,7 +1051,7 @@ void organs_all()
 									unsigned int adjustedPos = cellWorldPositionI - (    ( (animalSize / 2) * worldSize)   + animalSize / 2           ) ;
 									if (adjustedPos < worldSquareSize)
 									{
-										unsigned int speciesIndex  = animalIndex / numberOfSpecies;
+										unsigned int speciesIndex  = animalIndex / numberOfAnimalsPerSpecies;
 
 										int result = spawnAnimal( speciesIndex, animals[animalIndex].genes , adjustedPos, true );
 										if (result >= 0)
@@ -1139,7 +1151,7 @@ void move_all() // perform movement, feeding, and combat.
 	{
 		// if (animalIndex > populationCount) {break;}
 
-		unsigned int speciesIndex = animalIndex / (numberOfAnimals / numberOfSpecies);
+		unsigned int speciesIndex = animalIndex / numberOfAnimalsPerSpecies;
 
 		if (!animals[animalIndex].retired)
 		{
@@ -1169,7 +1181,10 @@ void move_all() // perform movement, feeding, and combat.
 						if ( (animals[animalIndex].body[cellLocalPositionI].organ != MATERIAL_NOTHING) )
 						{
 							cellsDone ++;
-							animals[animalIndex].energy -= taxEnergyScale * speciesEnergyOuts[speciesIndex] * organUpkeepCost(animals[animalIndex].body[cellLocalPositionI].organ);
+							if (taxIsByMass)
+							{
+								animals[animalIndex].energy -= taxEnergyScale * speciesEnergyOuts[speciesIndex] * organUpkeepCost(animals[animalIndex].body[cellLocalPositionI].organ);
+							}
 							bool okToStep = true;
 							unsigned int animalWorldPositionX    = animals[animalIndex].position % worldSize;
 							unsigned int animalWorldPositionY    = animals[animalIndex].position / worldSize;
@@ -1245,7 +1260,7 @@ void energy_all() // perform energies.
 	for (unsigned int animalIndex = 0; animalIndex < numberOfAnimals; ++animalIndex)
 	{
 
-		unsigned int speciesIndex  = animalIndex / (numberOfAnimals / numberOfSpecies);
+		unsigned int speciesIndex  = animalIndex / numberOfAnimalsPerSpecies;
 
 
 
@@ -1280,7 +1295,7 @@ void energy_all() // perform energies.
 				if (execute)
 				{
 					killAnimal( animalIndex);
-					return;
+					// return;
 				}
 			}
 			if (tournament)
@@ -1375,7 +1390,7 @@ void camera()
 				}
 			}
 
-			// if 
+			// if
 
 			// else
 			// {
@@ -1508,7 +1523,7 @@ void camera()
 	}
 
 
-	unsigned int speciesIndex = cameraTargetCreature / (numberOfAnimals / numberOfSpecies);
+	unsigned int speciesIndex = cameraTargetCreature / numberOfAnimalsPerSpecies;
 
 
 	// printf("speciesIndex %u, numberOfAnimals %u, numberOfSpecies %u \n", speciesIndex, numberOfAnimals, numberOfSpecies);
@@ -1519,7 +1534,7 @@ void camera()
 
 		printf( "x%u y%u, %f turns/s | t. %u of %u | species %i, %u/%u animals, %f in, %f out | world %u/%u animals  |  \n | animal %i energy %f of %f, debt %f, dmgdlt %u, dmgrecv %u, position x%u y%u destination x%u y%u | \n",
 		        cameraPositionX, cameraPositionY, fps,  tournamentCounter, tournamentInterval,
-		        speciesIndex,  speciesPopulationCounts[speciesIndex], numberOfAnimals / numberOfSpecies,	         energyScaleIn, speciesEnergyOuts[speciesIndex],
+		        speciesIndex,  speciesPopulationCounts[speciesIndex], numberOfAnimalsPerSpecies,	         energyScaleIn, speciesEnergyOuts[speciesIndex],
 		        populationCount, numberOfAnimals,
 		        cameraTargetCreature, animals[cameraTargetCreature].energy,
 		        animals[cameraTargetCreature].maxEnergy , animals[cameraTargetCreature].energyDebt,  animals[cameraTargetCreature].damageDone, animals[cameraTargetCreature].damageReceived,
@@ -1537,7 +1552,7 @@ void populationController()
 
 		newPopulationCount += speciesPopulationCounts[speciesIndex] ;
 		float populationDifference = speciesPopulationCounts[speciesIndex] ;
-		speciesEnergyOuts[speciesIndex] = tan (   ((populationDifference) / (numberOfAnimals / numberOfSpecies) ) * 0.5f * 3.1415f   ) ;
+		speciesEnergyOuts[speciesIndex] = tan (   ((populationDifference) / numberOfAnimalsPerSpecies ) * 0.5f * 3.1415f   )  ;
 
 	}
 
@@ -1571,8 +1586,10 @@ void setupTournamentAnimals()
 {
 	for (unsigned int i = 0; i < (numberOfSpecies ); ++i)	// initial random creatures.
 	{
-		unsigned int targetWorldPositionX = extremelyFastNumberFromZeroTo(worldSize - 1);
-		unsigned int targetWorldPositionY = extremelyFastNumberFromZeroTo(worldSize - 1);
+
+
+		unsigned int targetWorldPositionX = cameraPositionX + extremelyFastNumberFromZeroTo(viewFieldX) - (viewFieldX / 2);
+		unsigned int targetWorldPositionY = cameraPositionY + extremelyFastNumberFromZeroTo(viewFieldY) - (viewFieldY / 2);
 		unsigned int targetWorldPositionI = ( targetWorldPositionY * worldSize ) + targetWorldPositionX;
 
 		// unsigned int speciesIndex  = i / (numberOfAnimals / numberOfSpecies);
@@ -1582,22 +1599,22 @@ void setupTournamentAnimals()
 
 
 
-			int newAnimal = spawnAnimal(i,  exampleAnimal, targetWorldPositionI, true);
-			if (newAnimal >= 0)
+		int newAnimal = spawnAnimal(i,  exampleAnimal, targetWorldPositionI, true);
+		if (newAnimal >= 0)
+		{
+
+			if (extremelyFastNumberFromZeroTo(1) == 0)
 			{
-
-				// if (extremelyFastNumberFromZeroTo(1) == 0)
-				// {
-				// 	setupExampleAnimal(newAnimal);
-
-				// }
-				// else
-				// {
-
-				examplePlant(newAnimal);
-				// }
+				setupExampleAnimal(newAnimal);
 
 			}
+			else
+			{
+
+				examplePlant(newAnimal);
+			}
+
+		}
 		// }
 	}
 }
