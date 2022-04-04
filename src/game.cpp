@@ -85,8 +85,8 @@ inline unsigned int extremelyFastNumberFromZeroTo( unsigned int to)
 
 
 const bool brownianMotion        = false;
-const bool immortality           = false;
-const bool doReproduction        = true;
+const bool immortality           = true;
+const bool doReproduction        = false;
 const bool doMuscles             = true;
 const bool doPhotosynth          = true;
 const bool growingCostsEnergy    = true;
@@ -432,16 +432,16 @@ void setupExampleAnimal(unsigned int animalIndex)
 	}
 
 
-	// animals[animalIndex].genes[1]  = geneCodeToChar(DIRECTION_D ) ;
+	animals[animalIndex].genes[1]  = geneCodeToChar(DIRECTION_D ) ;
 	// // animals[animalIndex].genes[2]  = geneCodeToChar(GROW_BRANCH ) ;
-	// animals[animalIndex].genes[3]  = geneCodeToChar(ORGAN_GONAD ) ;
-	// animals[animalIndex].genes[4]  = geneCodeToChar(ORGAN_GONAD ) ;
+	animals[animalIndex].genes[2]  = geneCodeToChar(ORGAN_GONAD ) ;
 	// animals[animalIndex].genes[5]  = geneCodeToChar(DIRECTION_DR ) ;
 	// // animals[animalIndex].genes[6]  = geneCodeToChar(GROW_BRANCH ) ;
-	// animals[animalIndex].genes[7]  = geneCodeToChar(ORGAN_MUSCLE ) ;
-	// animals[animalIndex].genes[8]  = geneCodeToChar(ORGAN_SENSOR_CREATURE ) ;
-	// animals[animalIndex].genes[9]  = geneCodeToChar(ORGAN_MOUTH ) ;
-	// animals[animalIndex].genes[10]  = geneCodeToChar(GROW_END ) ;
+	animals[animalIndex].genes[3]  = geneCodeToChar(ORGAN_MUSCLE ) ;
+	animals[animalIndex].genes[4]  = geneCodeToChar(ORGAN_SENSOR_FOOD ) ;
+	animals[animalIndex].genes[5]  = geneCodeToChar(ORGAN_SENSOR_FOOD ) ;
+	animals[animalIndex].genes[6]  = geneCodeToChar(ORGAN_MOUTH ) ;
+	animals[animalIndex].genes[7]  = geneCodeToChar(GROW_END ) ;
 	// animals[animalIndex].genes[11]  = geneCodeToChar(DIRECTION_DL ) ;
 	// animals[animalIndex].genes[12]  = geneCodeToChar(GROW_BRANCH ) ;
 	// animals[animalIndex].genes[13]  = geneCodeToChar(ORGAN_MUSCLE ) ;
@@ -962,11 +962,11 @@ void sensor(int animalIndex, unsigned int cellLocalPositionI)
 
 	if (organ == ORGAN_SENSOR_RANDOM)   // random sensors just random-walk the creature.
 	{
-		if (extremelyFastNumberFromZeroTo(animals[animalIndex].stride) == 0)
-		{
-			animals[animalIndex].destinationX += animals[animalIndex].body[cellLocalPositionI].sign * (RNG() - 0.5f) * 0.1f;
-			animals[animalIndex].destinationY += animals[animalIndex].body[cellLocalPositionI].sign * (RNG() - 0.5f) * 0.1f;
-		}
+		// if (extremelyFastNumberFromZeroTo(animals[animalIndex].stride) == 0)
+		// {
+		// 	animals[animalIndex].destinationX += animals[animalIndex].body[cellLocalPositionI].sign * (RNG() - 0.5f) * 0.1f;
+		// 	animals[animalIndex].destinationY += animals[animalIndex].body[cellLocalPositionI].sign * (RNG() - 0.5f) * 0.1f;
+		// }
 		return;
 	}
 
@@ -994,9 +994,10 @@ void sensor(int animalIndex, unsigned int cellLocalPositionI)
 					unsigned int parentPosX = parentPos % worldSize;
 					unsigned int parentPosY = parentPos / worldSize;
 
-					animals[animalIndex].destinationX += animals[animalIndex].body[cellLocalPositionI].sign * (parentPosX - animals[animalIndex].destinationX) * 0.1f;
-					animals[animalIndex].destinationY += animals[animalIndex].body[cellLocalPositionI].sign * (parentPosY - animals[animalIndex].destinationY) * 0.1f;
+					animals[animalIndex].destinationX = parentPosX;//+= animals[animalIndex].body[cellLocalPositionI].sign * (parentPosX - animals[animalIndex].destinationX) * 0.1f;
+					animals[animalIndex].destinationY = parentPosY;//+= animals[animalIndex].body[cellLocalPositionI].sign * (parentPosY - animals[animalIndex].destinationY) * 0.1f;
 
+				
 					// for (unsigned int n = 0; n < nNeighbours; ++n)
 					// {
 					// 	unsigned int cellNeighbour = cellLocalPositionI + cellNeighbourOffsets[n];
@@ -1023,8 +1024,8 @@ void sensor(int animalIndex, unsigned int cellLocalPositionI)
 			unsigned int homePosX = homePos % worldSize;
 			unsigned int homePosY = homePos / worldSize;
 
-			animals[animalIndex].destinationX += animals[animalIndex].body[cellLocalPositionI].sign *  (homePosX - animals[animalIndex].destinationX) * 0.1f;
-			animals[animalIndex].destinationY += animals[animalIndex].body[cellLocalPositionI].sign *  (homePosY - animals[animalIndex].destinationY) * 0.1f;
+			animals[animalIndex].destinationX = homePosX;//+= animals[animalIndex].body[cellLocalPositionI].sign *  (homePosX - animals[animalIndex].destinationX) * 0.1f;
+			animals[animalIndex].destinationY = homePosY;//+= animals[animalIndex].body[cellLocalPositionI].sign *  (homePosY - animals[animalIndex].destinationY) * 0.1f;
 
 
 			// for (unsigned int n = 0; n < nNeighbours; ++n)
@@ -1123,8 +1124,8 @@ void sensor(int animalIndex, unsigned int cellLocalPositionI)
 			unsigned int targetPosX = targetWorldPositionI % worldSize;
 			unsigned int targetPosY = targetWorldPositionI / worldSize;
 
-			animals[animalIndex].destinationX += animals[animalIndex].body[cellLocalPositionI].sign * (targetPosX - animals[animalIndex]. destinationX) * 0.1f;
-			animals[animalIndex].destinationY += animals[animalIndex].body[cellLocalPositionI].sign * (targetPosY - animals[animalIndex]. destinationY) * 0.1f;
+			animals[animalIndex].destinationX = targetPosX ;//+= animals[animalIndex].body[cellLocalPositionI].sign * (targetPosX - animals[animalIndex]. destinationX) * 0.1f;
+			animals[animalIndex].destinationY =  targetPosY;//+= animals[animalIndex].body[cellLocalPositionI].sign * (targetPosY - animals[animalIndex]. destinationY) * 0.1f;
 
 
 
@@ -1414,6 +1415,9 @@ void move_all() // perform movement, feeding, and combat.
 		{
 
 
+	// unsigned int desintatinf = (animals[animalIndex].destinationY  * worldSize) + animals[animalIndex].destinationX;
+	// 				world[desintatinf] .material = MATERIAL_ROCK;
+	// 				printf("destinationX %u destinationY %u\n", animals[animalIndex].destinationX, animals[animalIndex].destinationY);
 
 
 
@@ -1868,8 +1872,8 @@ void setupRandomWorld()
 
 
 
-			// setupExampleAnimal(animalIndex);
-			examplePlant(animalIndex);
+			setupExampleAnimal(animalIndex);
+			// examplePlant(animalIndex);
 		}
 
 		unsigned int foodpos = targetWorldPositionI + (10 * worldSize) + 10;
