@@ -14,6 +14,13 @@ find_package(SDL2 REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(Boost REQUIRED COMPONENTS filesystem thread)
 
+
+
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
+#target_link_libraries(my_app PRIVATE Threads::Threads)
+
+
 #add_definitions(-DTRACY_ENABLE)
 
 # Define the framework files.
@@ -42,6 +49,7 @@ target_link_libraries (
 	${OPENGL_LIBRARIES}
 	${Boost_LIBRARIES}
 	${OPENSSL_LIBRARIES} dl
+	Threads::Threads
 )
 
 
