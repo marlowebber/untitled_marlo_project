@@ -389,9 +389,11 @@ void setupExampleAnimal(unsigned int animalIndex)
 
 // animals[animalIndex].genes[0] = geneCodeToChar( ORGAN_LEAF ); // first char is ignored
 	animals[animalIndex].genes[1] = geneCodeToChar( ORGAN_MOUTH );
-	animals[animalIndex].genes[3] = geneCodeToChar( ORGAN_MUSCLE);
-	animals[animalIndex].genes[2] = geneCodeToChar( ORGAN_SENSOR_RANDOM);
+	animals[animalIndex].genes[2] = geneCodeToChar( ORGAN_MUSCLE);
+	animals[animalIndex].genes[3] = geneCodeToChar( ORGAN_SENSOR_FOOD);
 	// animals[animalIndex].genes[4] = geneCodeToChar( ORGAN_SENSOR_INVERT);
+	// animals[animalIndex].genes[5] = geneCodeToChar( ORGAN_BONE);
+	// animals[animalIndex].genes[6] = geneCodeToChar( ORGAN_BONE);
 	// animals[animalIndex].genes[3] = geneCodeToChar( ORGAN_LEAF );
 // animals[animalIndex].genes[4] = geneCodeToChar( ORGAN_LEAF );
 
@@ -815,15 +817,18 @@ void sensor(int animalIndex, unsigned int cellLocalPositionI)
 	unsigned int cellWorldPositionX = cellLocalPositionX + animalWorldPositionX;
 	unsigned int cellWorldPositionY = cellLocalPositionY + animalWorldPositionY;
 	unsigned int cellWorldPositionI = (cellWorldPositionY * worldSize) + cellWorldPositionX;
-	unsigned int x = (cellWorldPositionX - animals[animalIndex].body[cellLocalPositionI].sensorRange) + extremelyFastNumberFromZeroTo( animals[animalIndex].body[cellLocalPositionI]. sensorRange * 2);
-	unsigned int y = (cellWorldPositionY - animals[animalIndex].body[cellLocalPositionI].sensorRange) + extremelyFastNumberFromZeroTo( animals[animalIndex].body[cellLocalPositionI]. sensorRange * 2);
+
+	unsigned int sensorRange = animals[animalIndex].body[cellLocalPositionI].sensorRange;
+	bool detected = false;
+	unsigned int organ = animals[animalIndex].body[cellLocalPositionI].organ;
+
+	int x = (cellWorldPositionX - sensorRange) + extremelyFastNumberFromZeroTo( sensorRange * 2);
+	int y = (cellWorldPositionY - sensorRange) + extremelyFastNumberFromZeroTo( sensorRange * 2);
 
 	if (x < worldSize && x > 0 && y < worldSize && y > 0)
 	{
 		unsigned int targetWorldPositionI =    (( y * worldSize ) + x ); // center the search area on the cell's world position.
 		// world[targetWorldPositionI].material = MATERIAL_ROCK;
-		bool detected = false;
-		unsigned int organ = animals[animalIndex].body[cellLocalPositionI].organ;
 
 		if (organ == ORGAN_SENSOR_RANDOM)   // random sensors just random-walk the creature.
 		{
@@ -893,33 +898,34 @@ void sensor(int animalIndex, unsigned int cellLocalPositionI)
 		if (detected)
 		{
 
-			int noisyTarget = targetWorldPositionI;
-			int noisyTargetX = extremelyFastNumberFromZeroTo(animalSize / 2)  - (animalSize / 4);
-			int noisyTargetY = (extremelyFastNumberFromZeroTo(animalSize / 2) - (animalSize  / 4)) * worldSize;
-			noisyTarget = (noisyTarget +  ((noisyTargetY * worldSize) + noisyTargetX)) % worldSquareSize;
 
 
+			unsigned int targetX = targetWorldPositionI % worldSize;
+			unsigned int targetY = targetWorldPositionI / worldSize;
+
+
+			targetX += extremelyFastNumberFromZeroTo(animalSize / 2)  - (animalSize / 4);
+			targetY += (extremelyFastNumberFromZeroTo(animalSize / 2) - (animalSize  / 4)) * worldSize;
 
 
 			// if the sensor is inverted, mirror the destination around the sensor.
 			if (animals[animalIndex].body[cellLocalPositionI].sign < 0)
 			{
-				int diffX = noisyTargetX - cellWorldPositionX;
-				int diffY = noisyTargetY - cellWorldPositionY;
-
-				int rotatedX = cellWorldPositionX - diffX;
-				int rotatedY = cellWorldPositionY - diffY;
-
-				// printf("SMIVNIENINVIENVINIENVIENVIEVNIEVOSGILHGLIRGILRHGHSRLGHRKS\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
-
-				noisyTarget = (rotatedY * worldSize) + rotatedX;
+				int diffX = targetX - cellWorldPositionX;
+				int diffY = targetY - cellWorldPositionY;
+				targetX = cellWorldPositionX - diffX;
+				targetY = cellWorldPositionY - diffY;
 			}
 
+			unsigned int finalTarget = (targetY * worldSize) + targetX;
 
 
-			// world[noisyTarget].material = MATERIAL_ROCK;
-			animals[animalIndex].body[cellLocalPositionI].target = noisyTarget;
-			animals[animalIndex].body[cellLocalPositionI].signalIntensity = 1.0f;
+			if (finalTarget < worldSquareSize)
+			{
+				// world[finalTarget].material = MATERIAL_ROCK;
+				animals[animalIndex].body[cellLocalPositionI].target = finalTarget;
+				animals[animalIndex].body[cellLocalPositionI].signalIntensity = 1.0f;
+			}
 
 		}
 		else
