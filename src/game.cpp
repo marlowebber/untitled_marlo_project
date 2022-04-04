@@ -98,7 +98,7 @@ const unsigned int animalSquareSize      = animalSize * animalSize;
 const int worldSize      = 1024;
 const unsigned int worldSquareSize       = worldSize * worldSize;
 const unsigned int genomeSize      = 32;
-const unsigned int numberOfAnimals = 10000;
+const unsigned int numberOfAnimals = 100000;
 const unsigned int numberOfAnimalsToSpawn = 100;
 const unsigned int nNeighbours     = 8;
 const unsigned int numberOfCharacters = 31;
@@ -924,7 +924,7 @@ void sensor(int animalIndex, unsigned int cellLocalPositionI)
 				targetY = cellWorldPositionY - diffY;
 			}
 
-			 int finalTarget = (targetY * worldSize) + targetX;
+			int finalTarget = (targetY * worldSize) + targetX;
 
 
 			if (finalTarget < worldSquareSize)
@@ -958,7 +958,7 @@ void sensor(int animalIndex, unsigned int cellLocalPositionI)
 				// 	{;}
 
 				// apply the change.
-				 int newDestination = (destinationY * worldSize) + destinationX;
+				int newDestination = (destinationY * worldSize) + destinationX;
 
 				if (newDestination < worldSquareSize && newDestination > 0)
 				{
@@ -999,12 +999,16 @@ int defenseAtPoint(unsigned int animalIndex, unsigned int cellLocalPositionI)
 void grow_all()
 {
 	// grow all growable cells.
-	unsigned int newpop = 0;
+	// unsigned int newpop = 0;
 	for (unsigned int animalIndex = 0; animalIndex < numberOfAnimals; ++animalIndex)
 	{
+
+
+		if (animalIndex > populationCount) {break;}
+
 		if (!animals[animalIndex].retired)
 		{
-			newpop++;
+			// newpop++;
 			if (animals[animalIndex].energyDebt > 0.0f)
 			{
 				if (animals[animalIndex].energy > animals[animalIndex].maxEnergy / 2.0f)
@@ -1026,7 +1030,7 @@ void grow_all()
 			}
 		}
 	}
-	populationCount = newpop;
+	// populationCount = newpop;
 }
 
 void organs_all()
@@ -1034,12 +1038,21 @@ void organs_all()
 	// perform organ functionality.
 	for (unsigned int animalIndex = 0; animalIndex < numberOfAnimals; ++animalIndex)
 	{
+
+
+		if (animalIndex > populationCount) {break;}
+
+
 		if (!animals[animalIndex].retired)
 		{
+			unsigned int cellsDone = 0;
 			float totalLiver = 0;
 			for (unsigned int cellLocalPositionI = 0; cellLocalPositionI < animalSquareSize; ++cellLocalPositionI)                                      // place animalIndex on grid and attack / eat. add captured energy
 			{
-				if (animals[animalIndex].body[cellLocalPositionI].organ == MATERIAL_NOTHING) {continue;}
+				if (animals[animalIndex].body[cellLocalPositionI].organ == MATERIAL_NOTHING)
+				{continue;}
+				else
+				{cellsDone++;}
 
 				unsigned int animalWorldPositionX    = animals[animalIndex].position % worldSize;
 				unsigned int animalWorldPositionY    = animals[animalIndex].position / worldSize;
@@ -1116,9 +1129,9 @@ void organs_all()
 					}
 					case ORGAN_MOUTH :
 					{
-						if (world[cellWorldPositionI].material == MATERIAL_FOOD 
-							// && world[cellWorldPositionI].identity == animalIndex
-							)
+						if (world[cellWorldPositionI].material == MATERIAL_FOOD
+						        // && world[cellWorldPositionI].identity == animalIndex
+						   )
 						{
 							animals[animalIndex].energy += foodEnergy * energyScaleIn;
 							world[cellWorldPositionI].material = MATERIAL_NOTHING;
@@ -1142,15 +1155,15 @@ void organs_all()
 
 							// if (diffSum != 0.0f)
 							// {
-								muscleX = diffX;// / diffSum;
-								muscleY = diffY;// / diffSum;
+							muscleX = diffX;// / diffSum;
+							muscleY = diffY;// / diffSum;
 							// }
 
-								if (muscleX > 1.0f) { muscleX = 1.0f;}
-								else if (muscleX < -1.0f) { muscleX = -1.0f;}
+							if (muscleX > 1.0f) { muscleX = 1.0f;}
+							else if (muscleX < -1.0f) { muscleX = -1.0f;}
 
-								if (muscleY > 1.0f) { muscleY = 1.0f;}
-								else if (muscleY < -1.0f) { muscleY = -1.0f;}
+							if (muscleY > 1.0f) { muscleY = 1.0f;}
+							else if (muscleY < -1.0f) { muscleY = -1.0f;}
 
 
 
@@ -1166,8 +1179,10 @@ void organs_all()
 					}
 					}
 				}
+				if (cellsDone >= animals[animalIndex].mass) {break;}
 			}
 			animals[animalIndex].maxEnergy = animals[animalIndex].mass + (totalLiver * liverStorage);
+
 		}
 	}
 }
@@ -1177,6 +1192,8 @@ void move_all() // perform movement, feeding, and combat.
 
 	for (unsigned int animalIndex = 0; animalIndex < numberOfAnimals; ++animalIndex)
 	{
+		if (animalIndex > populationCount) {break;}
+
 		if (!animals[animalIndex].retired)
 		{
 			if (brownianMotion)
@@ -1199,10 +1216,12 @@ void move_all() // perform movement, feeding, and combat.
 				if ( world[newPosition].material != MATERIAL_ROCK)
 				{
 					animals[animalIndex].position = newPosition;
+					unsigned int cellsDone = 0;
 					for (unsigned int cellLocalPositionI = 0; cellLocalPositionI < animalSquareSize; ++cellLocalPositionI)                                      // place animalIndex on grid and attack / eat. add captured energy
 					{
 						if ( (animals[animalIndex].body[cellLocalPositionI].organ != MATERIAL_NOTHING) )
 						{
+							cellsDone ++;
 							animals[animalIndex].energy -= taxEnergyScale * energyScaleOut * organUpkeepCost(animals[animalIndex].body[cellLocalPositionI].organ);
 							bool okToStep = true;
 							unsigned int animalWorldPositionX    = animals[animalIndex].position % worldSize;
@@ -1261,6 +1280,7 @@ void move_all() // perform movement, feeding, and combat.
 								world[cellWorldPositionI].identity = animalIndex;
 							}
 						}
+						if (cellsDone >= animals[animalIndex].mass) { break;}
 					}
 				}
 			}
@@ -1270,10 +1290,12 @@ void move_all() // perform movement, feeding, and combat.
 
 void energy_all() // perform energies.
 {
+	unsigned int newpop = 0;
 	for (unsigned int animalIndex = 0; animalIndex < numberOfAnimals; ++animalIndex)
 	{
 		if (!animals[animalIndex].retired)
 		{
+			newpop ++;
 			animals[animalIndex].age++;
 			if (animals[animalIndex].energy > animals[animalIndex].maxEnergy) {animals[animalIndex].energy = animals[animalIndex].maxEnergy;}
 			if (!immortality)// die
@@ -1318,6 +1340,7 @@ void energy_all() // perform energies.
 			}
 		}
 	}
+	populationCount = newpop;
 }
 
 void computeAllAnimalsOneTurn()
