@@ -78,12 +78,12 @@ inline unsigned int extremelyFastNumberFromZeroTo( unsigned int to)
 
 const bool brownianMotion        = false;
 const bool immortality           = true;
-const bool doReproduction        = false;
+const bool doReproduction        = true;
 const bool doMuscles             = true;
 const bool doPhotosynth          = true;
 const bool growingCostsEnergy    = true;
 const bool lockfps               = false;
-const bool tournament            = false;
+const bool tournament            = true;
 const bool taxIsByMass           = true;
 const bool threading             = true;
 const bool cameraFollowsChampion = true;
@@ -388,9 +388,11 @@ void setupExampleAnimal(unsigned int animalIndex)
 
 
 // animals[animalIndex].genes[0] = geneCodeToChar( ORGAN_LEAF ); // first char is ignored
-	animals[animalIndex].genes[1] = geneCodeToChar( ORGAN_MOUTH );
-	animals[animalIndex].genes[2] = geneCodeToChar( ORGAN_MUSCLE);
-	animals[animalIndex].genes[3] = geneCodeToChar( ORGAN_SENSOR_FOOD);
+	animals[animalIndex].genes[1] = geneCodeToChar( CONDITION_EQUAL );
+	animals[animalIndex].genes[2] = 'A' + 1 ;//geneCodeToChar( CONDITION_EQUAL );
+	animals[animalIndex].genes[3] = geneCodeToChar( ORGAN_MOUTH );
+	animals[animalIndex].genes[4] = geneCodeToChar( ORGAN_MUSCLE);
+	animals[animalIndex].genes[5] = geneCodeToChar( ORGAN_SENSOR_RANDOM);
 	// animals[animalIndex].genes[4] = geneCodeToChar( ORGAN_SENSOR_INVERT);
 	// animals[animalIndex].genes[5] = geneCodeToChar( ORGAN_BONE);
 	// animals[animalIndex].genes[6] = geneCodeToChar( ORGAN_BONE);
@@ -489,36 +491,23 @@ void grow( int animalIndex, unsigned int cellLocalPositionI)
 	}
 	else                                                                                                                               // if the gene is a growable organ, grow it in this square, mark the square as completed, and then journey on to the activated neighbours
 	{
-		// if the current cell does not have that organ type, add it in
-		// if it does have it, do not add it in, and mark the neighbour to grow, SETTING THE GENE CURSOR BACK ONE PLACE so the neighbour gets the gene instead.
-		// if (!animals[animalIndex].body[cellLocalPositionI].grown && ((animals[animalIndex].body[cellLocalPositionI].organ  & gene ) != gene))
-		// if (animals[animalIndex].body[cellLocalPositionI].organ == MATERIAL_NOTHING)
-		// {
-		// 	// animals[animalIndex].body[cellLocalPositionI].organ = gene;
-		// 	// animals[animalIndex].mass++;
-		// 	// animals[animalIndex].energyDebt += organGrowthCost(gene);
 
-		// }
-		// else
-		// {
-		// printf("CULOLO\n");
-		// go through neighbours.
 
-		unsigned int growthMask = 0x00;
+		unsigned int occupiedNeighbours = 0;
+
 		for (unsigned int n = 0; n < nNeighbours; ++n)
 		{
 			unsigned int cellNeighbour = cellLocalPositionI + cellNeighbourOffsets[n];
 			if (cellNeighbour < animalSquareSize)
 			{
-				// check sub neighbours. also get sensor range  and inversion while you're here.
-
 				if (animals[animalIndex].body[cellNeighbour].organ == gene)
 				{
 					animals[animalIndex].body[cellLocalPositionI].sensorRange += baseSensorRange;
 					animals[animalIndex].body[cellNeighbour].sensorRange = animals[animalIndex].body[cellLocalPositionI].sensorRange;
 				}
 
-				// inverters invert all surrounding sensors regardless of who was grown first.
+
+
 				if (animals[animalIndex].body[cellNeighbour].organ == ORGAN_SENSOR_INVERT)
 				{
 					animals[animalIndex].body[cellLocalPositionI].sign = -1;
@@ -531,83 +520,90 @@ void grow( int animalIndex, unsigned int cellLocalPositionI)
 
 
 
-				unsigned int occupiedSubNeighbours = 0;
-				for (unsigned int sn = 0; sn < nNeighbours; ++sn)
+
+
+
+				if (animals[animalIndex].body[cellNeighbour].organ == MATERIAL_NOTHING )
 				{
-					unsigned int subNeighbour = cellNeighbour + cellNeighbourOffsets[n];
-					if (subNeighbour < animalSquareSize)
-					{
-						if (animals[animalIndex].body[subNeighbour].organ != MATERIAL_NOTHING)
-						{
-							occupiedSubNeighbours++;
-						}
-					}
-				}
-
-
-				// bool growable = false;
-				if (animals[animalIndex].body[cellLocalPositionI]. crystalCondition == CONDITION_GREATEROREQUAL )
-				{
-					if (occupiedSubNeighbours >= animals[animalIndex].body[cellLocalPositionI].crystalN)
-					{
-						growthMask = growthMask | (1 << n);
-					}
-				}
-				else if (animals[animalIndex].body[cellLocalPositionI]. crystalCondition == CONDITION_EQUAL )
-				{
-					if (occupiedSubNeighbours == animals[animalIndex].body[cellLocalPositionI].crystalN)
-					{
-						growthMask = growthMask | (1 << n);
-					}
-				}
-				else if (animals[animalIndex].body[cellLocalPositionI]. crystalCondition == CONDITION_LESSOREQUAL )
-				{
-					if (occupiedSubNeighbours <= animals[animalIndex].body[cellLocalPositionI].crystalN)
-					{
-						growthMask = growthMask | (1 << n);
-					}
-				}
-			}
-		}
-
-
-
-
-		for (unsigned int n = 0; n < nNeighbours; ++n)
-		{
-
-			if ((growthMask & (1 << n)) == (1 << n))
-			{
-
-				unsigned int cellNeighbour = cellLocalPositionI + cellNeighbourOffsets[n];
-				if (cellNeighbour < animalSquareSize)
-				{
-					animals[animalIndex].body[cellNeighbour].origin     = animals[animalIndex].body[cellLocalPositionI].origin ;
-					animals[animalIndex].body[cellNeighbour].geneCursor = animals[animalIndex].body[cellLocalPositionI].geneCursor ;
+					animals[animalIndex].body[cellNeighbour].origin               = animals[animalIndex].body[cellLocalPositionI].origin ;
+					animals[animalIndex].body[cellNeighbour].geneCursor           = animals[animalIndex].body[cellLocalPositionI].geneCursor ;
 					animals[animalIndex].body[cellNeighbour]. crystalN            = animals[animalIndex].body[cellLocalPositionI].crystalN;
 					animals[animalIndex].body[cellNeighbour]. crystalCondition    = animals[animalIndex].body[cellLocalPositionI].crystalCondition;
 					animals[animalIndex].body[cellNeighbour].grown = false;
-
-
-
-
+				}
+				else
+				{
+					occupiedNeighbours++;
 
 				}
 
+
 			}
-
-
 		}
 
 
 
-		animals[animalIndex].body[cellLocalPositionI].organ = gene;
-		animals[animalIndex].mass++;
-		animals[animalIndex].energyDebt += organGrowthCost(gene);
+
+		// for (unsigned int n = 0; n < nNeighbours; ++n)
+		// {
+
+		// 	if ((growthMask & (1 << n)) == (1 << n))
+		// 	{
+
+		// 		unsigned int cellNeighbour = cellLocalPositionI + cellNeighbourOffsets[n];
+		// 		if (cellNeighbour < animalSquareSize)
+		// 		{
 
 
 
-		animals[animalIndex].body[cellLocalPositionI].grown = true;
+
+
+
+		// 	}
+
+		// }
+
+//
+		// }
+
+		bool readyToGrow = false;
+
+		if (animals[animalIndex].body[cellLocalPositionI]. crystalCondition == CONDITION_GREATEROREQUAL )
+		{
+			if (occupiedNeighbours >= animals[animalIndex].body[cellLocalPositionI].crystalN)
+			{
+				// growthMask = growthMask | (1 << n);readyToGrow
+				readyToGrow = true;
+			}
+		}
+		else if (animals[animalIndex].body[cellLocalPositionI]. crystalCondition == CONDITION_EQUAL )
+		{
+			if (occupiedNeighbours == animals[animalIndex].body[cellLocalPositionI].crystalN)
+			{
+				// growthMask = growthMask | (1 << n);
+				readyToGrow = true;
+			}
+		}
+		else if (animals[animalIndex].body[cellLocalPositionI]. crystalCondition == CONDITION_LESSOREQUAL )
+		{
+			if (occupiedNeighbours <= animals[animalIndex].body[cellLocalPositionI].crystalN)
+			{
+				// growthMask = growthMask | (1 << n);
+				readyToGrow = true;
+			}
+		}
+
+
+		if (	readyToGrow )
+		{
+			animals[animalIndex].body[cellLocalPositionI].organ = gene;
+			animals[animalIndex].mass++;
+			animals[animalIndex].energyDebt += organGrowthCost(gene);
+
+
+
+			animals[animalIndex].body[cellLocalPositionI].grown = true;
+		}
 		return;
 	}
 }
