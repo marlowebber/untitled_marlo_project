@@ -389,8 +389,8 @@ void setupExampleAnimal(unsigned int animalIndex)
 
 // animals[animalIndex].genes[0] = geneCodeToChar( ORGAN_LEAF ); // first char is ignored
 	animals[animalIndex].genes[1] = geneCodeToChar( ORGAN_MOUTH );
-	animals[animalIndex].genes[2] = geneCodeToChar( ORGAN_MUSCLE);
-	animals[animalIndex].genes[3] = geneCodeToChar( ORGAN_SENSOR_FOOD);
+	animals[animalIndex].genes[3] = geneCodeToChar( ORGAN_MUSCLE);
+	animals[animalIndex].genes[2] = geneCodeToChar( ORGAN_SENSOR_RANDOM);
 	// animals[animalIndex].genes[4] = geneCodeToChar( ORGAN_SENSOR_INVERT);
 	// animals[animalIndex].genes[3] = geneCodeToChar( ORGAN_LEAF );
 // animals[animalIndex].genes[4] = geneCodeToChar( ORGAN_LEAF );
@@ -829,7 +829,10 @@ void sensor(int animalIndex, unsigned int cellLocalPositionI)
 		{
 			if (extremelyFastNumberFromZeroTo(animals[animalIndex].stride) == 0)
 			{
-				targetWorldPositionI	= RNG() * worldSize;
+
+				// world[targetWorldPositionI].material = MATERIAL_ROCK;
+
+				// targetWorldPositionI	= RNG() * worldSquareSize;
 				detected  = true;
 			}
 		}
