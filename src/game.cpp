@@ -66,10 +66,11 @@ inline unsigned int extremelyFastNumberFromZeroTo( unsigned int to)
 #define GROW_ADDOFFSPRINGENERGY   20 // Y    
 #define GROW_STRIDE               21 // Z    
 #define GROW_SEQUENCE             22 // [  
-#define MATERIAL_FOOD             23 //           
-#define MATERIAL_ROCK             24 //           
-#define MATERIAL_WATER            25 //           
-#define MARKER                    26 //      // numbers above 25 don't correspond to lower-case letters(0..25) so we don't use them in the gene code. But (26..31) are still compatible with our masking scheme.
+#define GROW_JUMP                 23
+#define MATERIAL_FOOD             24 //           
+#define MATERIAL_ROCK             25 //           
+#define MATERIAL_WATER            26 //           
+#define MARKER                    27 //      // numbers above 25 don't correspond to lower-case letters(0..25) so we don't use them in the gene code. But (26..31) are still compatible with our masking scheme.
 
 #define WORLD_RANDOM 1
 #define WORLD_EXAMPLECREATURE 2
@@ -430,6 +431,14 @@ void grow( int animalIndex, unsigned int cellLocalPositionI)
 		if (animals[animalIndex].body[cellLocalPositionI].geneCursor >= genomeSize) { animals[animalIndex].body[cellLocalPositionI].grown = true; return; }
 		animals[animalIndex].body[cellLocalPositionI].sequenceNumber  = charToGeneCode( animals[animalIndex].genes[ animals[animalIndex].body[cellLocalPositionI].geneCursor ] );
 		animals[animalIndex].body[cellLocalPositionI].origin     = cellLocalPositionI;
+		return;
+	}
+	else if (gene == GROW_JUMP) // increase how often the animal's path is updated, which affects its random path length.
+	{
+		animals[animalIndex].body[cellLocalPositionI].geneCursor ++;
+		if (animals[animalIndex].body[cellLocalPositionI].geneCursor >= genomeSize) { animals[animalIndex].body[cellLocalPositionI].grown = true; return; }
+		animals[animalIndex].body[cellLocalPositionI].geneCursor  += (charToGeneCode( animals[animalIndex].genes[ animals[animalIndex].body[cellLocalPositionI].geneCursor ] ) -13 ) ;
+		if (animals[animalIndex].body[cellLocalPositionI].geneCursor >= genomeSize) { animals[animalIndex].body[cellLocalPositionI].grown = true; return; }
 		return;
 	}
 	else if (gene == CONDITION_GREATER || gene == CONDITION_EQUAL || gene == CONDITION_LESS)	// increase the amount of energy given to newborn offspring.
